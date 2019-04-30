@@ -64,7 +64,7 @@ program:
 	function { exit(0); }
 	;
 function:
-		function stmt { ex($2); freeNode($2);printf("\n5\n"); }
+		function stmt { ex($2); freeNode($2);}
 	| /* NULL */
 	;
 
