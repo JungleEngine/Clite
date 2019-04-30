@@ -5,8 +5,19 @@
 void yyerror(char *);
 %}
 %%
+
+"int"						{
+							return INT;
+							}
+
+"float"						{
+							return FLOAT;
+							}
+
+
+
 [a-z]						{
-							yylval.sIndex = *yytext - 'a';
+							yylval.var_name = yytext;
 							return VARIABLE;
 							}
 			

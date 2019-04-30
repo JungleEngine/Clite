@@ -1,32 +1,54 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdarg.h>
 #include "clite.h"
 
+
 static int lbl;
+
+struct symbol{
+	char* var_name;
+	int var_type;
+	
+	// TODO: Add value if needed.
+	
+	struct symbol* next;	
+};
+
+typedef struct symbol symbol;
+symbol* symbol_table;
+
+
 /* prototypes */
 nodeType *opr(int oper, int nops, ...);
 nodeType *id(int i);
 nodeType *con(int value);
+symbol* insertSymbol(char const* symbol_name, int symbol_type);
 void freeNode(nodeType *p);
 int ex(nodeType *p);
 int yylex(void);
 
 void yyerror(char *s);
 int sym[26];	/* symbol table */
+
+
+
 %}
 
 
 %union {
 int iValue; 	/* integer value */
 char sIndex;	/* symbol table index */
+char* var_name;
 nodeType *nPtr;	/* node pointer */
 };
 
 %token <iValue> INTEGER
-%token <sIndex> VARIABLE
-%token WHILE IF PRINT
+%token <var_name> VARIABLE
+%token WHILE IF PRINT 
+%token INT FLOAT
 %nonassoc IFX
 %nonassoc ELSE
 %left GE LE EQ NE '>' '<'
@@ -42,20 +64,23 @@ program:
 	function { exit(0); }
 	;
 function:
-		function stmt { ex($2); freeNode($2); }
+		function stmt { ex($2); freeNode($2);printf("\n5\n"); }
 	| /* NULL */
 	;
 
 stmt:
 	';'									{ $$ =	opr(';', 2, NULL, NULL); }
-	| expr ';'							{ $$ =	$1; }
+	| expr  ';'							{ $$ = $1; }
+	| INT VARIABLE ';'					{ insertSymbol($2, 1);printf("2\n");}
+	| FLOAT VARIABLE ';'				{ insertSymbol($2, 2);}
 	| PRINT expr ';'					{ $$ =	opr(PRINT, 1, $2); }
 	| VARIABLE '=' expr ';'				{ $$ =	opr('=', 2, id($1), $3); }
-	| WHILE '(' expr ')' stmt 			{ $$ =	opr(WHILE, 2, $3, $5); }
-	| IF '(' expr ')' stmt %prec IFX	{ $$ = opr(IF, 2, $3, $5); }
-	| IF '(' expr ')' stmt ELSE stmt 	{ $$ = opr(IF, 3, $3, $5, $7); }
+	| WHILE '(' expr ')'  stmt 			{ $$ =	opr(WHILE, 2, $3, $5); }
+	| IF '(' expr ')'  stmt %prec IFX	{ $$ = opr(IF, 2, $3, $5); }
+	| IF '(' expr ')'  stmt ELSE stmt 	{ $$ = opr(IF, 3, $3, $5, $7); }
 	| '{' stmt_list '}' 				{ $$ = $2; }
 	  ;
+
 
 stmt_list:
 	stmt 								{ $$ = $1; }
@@ -85,6 +110,15 @@ INTEGER 	{ $$ = con($1); }
 
 #define SIZEOF_NODETYPE ((char *)&p->con - (char *)p)
 
+symbol* insertSymbol(char const* symbol_name, int symbol_type){
+	symbol* ptr = (symbol*) malloc(sizeof(symbol));
+	ptr->var_name = (char*) malloc(strlen(symbol_name) + 1);
+	strcpy(ptr->var_name, symbol_name);
+	ptr->var_type = symbol_type;
+	ptr->next = (struct symbol* ) symbol_table;
+	symbol_table = ptr;
+	return ptr;
+}
 
 nodeType *con(int value) {
 	nodeType *p;
@@ -145,6 +179,13 @@ void freeNode(nodeType *p) {
 
 
 int ex(nodeType *p) {
+	printf("--------------------------------------------------------\n");
+	printf("-------------------SYMBOL TABLE----------------\n");
+	symbol* ptr;
+	for(ptr = symbol_table; ptr != (symbol*) 0; ptr = (symbol*) ptr->next){
+		printf(" Symbol { name: %s || Type:%d \n", ptr->var_name, ptr->var_type);
+	}
+	printf("-------------------SYMBOL TABLE-------------------------\n");
 	int lbl1, lbl2;
 	if (!p) return 0;
 	switch (p->type) {
