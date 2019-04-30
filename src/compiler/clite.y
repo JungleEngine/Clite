@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include "clite.h"
-
+#include "sym.hpp"
 static int lbl;
 /* prototypes */
 nodeType *opr(int oper, int nops, ...);
@@ -42,12 +42,12 @@ program:
 	function { exit(0); }
 	;
 function:
-		function stmt { ex($2); freeNode($2); }
+		function stmt { mp_test(1); ex($2); freeNode($2); }
 	| /* NULL */
 	;
 
 stmt:
-	';'									{ $$ =	opr(';', 2, NULL, NULL); }
+	';'									{ $$ =	opr(';', 2, NULL, NULL);  }
 	| expr ';'							{ $$ =	$1; }
 	| PRINT expr ';'					{ $$ =	opr(PRINT, 1, $2); }
 	| VARIABLE '=' expr ';'				{ $$ =	opr('=', 2, id($1), $3); }
@@ -89,7 +89,9 @@ INTEGER 	{ $$ = con($1); }
 nodeType *con(int value) {
 	nodeType *p;
 	/* allocate node */
-	if ((p = malloc(sizeof(nodeType))) == NULL)
+	// if ((p = malloc(sizeof(nodeType))) == NULL)
+	p = new nodeType();
+	if(p == NULL)
 	yyerror("out of memory");
 	/* copy information */
 	p->type = typeCon;
@@ -100,7 +102,9 @@ nodeType *con(int value) {
 nodeType *id(int i) {
 	nodeType *p;
 	/* allocate node */
-	if ((p = malloc(sizeof(nodeType))) == NULL)
+	// if ((p = malloc(sizeof(nodeType))) == NULL)
+	p = new nodeType();
+	if(p == NULL)
 	yyerror("out of memory");
 	/* copy information */
 	p->type = typeId;
@@ -114,10 +118,12 @@ nodeType *opr(int oper, int nops, ...) {
 	int i;
 
 	/* allocate node */
-	if ((p = malloc(sizeof(nodeType))) == NULL)
-		yyerror("out of memory");
-	if ((p->opr.op = malloc(nops * sizeof(nodeType))) == NULL)
-		yyerror("out of memory");
+	p = new nodeType();
+	if(p == NULL)
+	yyerror("out of memory");
+	p->opr.op = new nodeType*;
+	if(p->opr.op == NULL)
+	yyerror("out of memory");
 
 	/* copy information */
 	p->type = typeOpr;

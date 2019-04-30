@@ -37,3 +37,4 @@ y.tab.c
 y.tab.h
 clite
 clite.dSYM
+*.output
