@@ -21,6 +21,10 @@ integer [1-9][0-9]*
 							return T_STRING;
 							}
 
+"const"						{
+							return T_CONST;
+							}
+
 "while"						return WHILE;
 "if"						return IF;
 "else"						return ELSE;

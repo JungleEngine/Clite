@@ -26,11 +26,12 @@ typedef struct {
 } oprNodeType;
 typedef struct nodeTypeTag {
 	nodeEnum type;	/* type of node */
+	int constant;
 	union {
 		conNodeType con;	/* constants */
 		charNodeType con_char;
 		floatNodeType flo;
-		idNodeType id;	/* identifiers */
+		idNodeType id;		/* identifiers */
 		oprNodeType opr;	/* operators */
 	};
 } nodeType;

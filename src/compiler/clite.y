@@ -11,7 +11,7 @@ static int lbl;
 struct symbol{
 	char* var_name;
 	int var_type;
-	
+	int constant;
 	// TODO: Add value if needed.
 	
 	struct symbol* next;	
@@ -27,7 +27,7 @@ nodeType *id(char* var_name);
 nodeType *con(int value);
 nodeType *conChar(char* value);
 nodeType *flo(float value);
-symbol* insertSymbol(char const* symbol_name, int symbol_type);
+symbol* insertSymbol(char const* symbol_name, int symbol_type, int constant);
 void print_symTable();
 void freeNode(nodeType *p);
 int ex(nodeType *p);
@@ -44,6 +44,7 @@ int sym[26];	/* symbol table */
 %union {
 int iValue; 	/* integer value */
 float fValue;
+int boolean;
 char sIndex;	/* symbol table index */
 char* var_name;
 nodeType *nPtr;	/* node pointer */
@@ -52,7 +53,7 @@ nodeType *nPtr;	/* node pointer */
 %token <iValue> INTEGER 
 %token <fValue> FLOAT
 %token <var_name> VARIABLE STRING
-%token WHILE IF PRINT 
+%token WHILE IF PRINT T_CONST
 %token <iValue> T_INT T_FLOAT T_STRING
 %nonassoc IFX
 %nonassoc ELSE
@@ -62,6 +63,7 @@ nodeType *nPtr;	/* node pointer */
 %nonassoc UMINUS
 %type <nPtr> stmt expr stmt_list 
 %type <iValue> type
+%type <boolean> const
 
 
 %%
@@ -77,9 +79,9 @@ function:
 stmt:
 	';'									{ $$ = opr(';', 2, NULL, NULL); }
 	| expr  ';'							{ $$ = $1; }
-	| type VARIABLE ';'					{ $$ = opr('=', 2, id($2), con(0)); insertSymbol($2, $1);}
+	| const type VARIABLE ';'			{ $$ = opr('=', 2, id($3), con(0)); insertSymbol($3, $2, $1);}
 	| PRINT expr ';'					{ $$ = opr(PRINT, 1, $2); }
-	| type VARIABLE '=' expr ';'		{ $$ = opr('=', 2, id($2), $4); insertSymbol($2, $1);}
+	| const type VARIABLE '=' expr ';'	{ $$ = opr('=', 2, id($3), $5); insertSymbol($3, $2, $1);}
 	| VARIABLE '=' expr ';'				{ $$ = opr('=', 2, id($1), $3); }
 	| WHILE '(' expr ')'  stmt 			{ $$ = opr(WHILE, 2, $3, $5); }
 	| IF '(' expr ')'  stmt %prec IFX	{ $$ = opr(IF, 2, $3, $5); }
@@ -87,48 +89,53 @@ stmt:
 	| '{' stmt_list '}' 				{ $$ = $2; }
 	  ;
 
+const: 
+	T_CONST			{ $$ = 1; }
+	| /* NULL */	{ $$ = 0; }
+	;
 
 stmt_list:
-	stmt 								{ $$ = $1; }
-	| stmt_list stmt 					{ $$ = opr(';', 2, $1, $2); }
+	stmt 					{ $$ = $1; }
+	| stmt_list stmt 		{ $$ = opr(';', 2, $1, $2); }
  	;
 
 expr:
-INTEGER 				{ $$ = con($1); }
-| VARIABLE 				{ $$ = id($1); }
-| STRING    			{ $$ = conChar($1); }
-| FLOAT                 { $$ = flo($1); }
-| '-' expr %prec UMINUS { $$ = opr(UMINUS, 1, $2); }
-| expr '+' expr 		{ $$ = opr('+', 2, $1, $3); }
-| expr '-' expr 		{ $$ = opr('-', 2, $1, $3); }
-| expr '*' expr 		{ $$ = opr('*', 2, $1, $3); }
-| expr '/' expr 		{ $$ = opr('/', 2, $1, $3); }
-| expr '<' expr 		{ $$ = opr('<', 2, $1, $3); }
-| expr '>' expr 		{ $$ = opr('>', 2, $1, $3); }
-| expr GE expr 			{ $$ = opr(GE, 2, $1, $3); }
-| expr LE expr 			{ $$ = opr(LE, 2, $1, $3); }
-| expr NE expr 			{ $$ = opr(NE, 2, $1, $3); }
-| expr EQ expr 			{ $$ = opr(EQ, 2, $1, $3); }
-| '(' expr ')' 			{ $$ = $2; }
-;
+	INTEGER 				{ $$ = con($1); }
+	| VARIABLE 				{ $$ = id($1); }
+	| STRING    			{ $$ = conChar($1); }
+	| FLOAT                 { $$ = flo($1); }
+	| '-' expr %prec UMINUS { $$ = opr(UMINUS, 1, $2); }
+	| expr '+' expr 		{ $$ = opr('+', 2, $1, $3); }
+	| expr '-' expr 		{ $$ = opr('-', 2, $1, $3); }
+	| expr '*' expr 		{ $$ = opr('*', 2, $1, $3); }
+	| expr '/' expr 		{ $$ = opr('/', 2, $1, $3); }
+	| expr '<' expr 		{ $$ = opr('<', 2, $1, $3); }
+	| expr '>' expr 		{ $$ = opr('>', 2, $1, $3); }
+	| expr GE expr 			{ $$ = opr(GE, 2, $1, $3); }
+	| expr LE expr 			{ $$ = opr(LE, 2, $1, $3); }
+	| expr NE expr 			{ $$ = opr(NE, 2, $1, $3); }
+	| expr EQ expr 			{ $$ = opr(EQ, 2, $1, $3); }
+	| '(' expr ')' 			{ $$ = $2; }
+	;
 
 type:
-T_INT             {$$ = 0;}
-| T_FLOAT         {$$ = 1;}
-| T_STRING        {$$ = 2;}
-;
+	T_INT             {$$ = 0;}
+	| T_FLOAT         {$$ = 1;}
+	| T_STRING        {$$ = 2;}
+	;
 
 %%
 
 
 #define SIZEOF_NODETYPE ((char *)&p->con - (char *)p)
 
-symbol* insertSymbol(char const* symbol_name, int symbol_type){
+symbol* insertSymbol(char const* symbol_name, int symbol_type, int constant){
 	printf(" Symbol type:%d \n", symbol_type);
 	symbol* ptr = (symbol*) malloc(sizeof(symbol));
 	ptr->var_name = (char*) malloc(strlen(symbol_name) + 1);
 	strcpy(ptr->var_name, symbol_name);
 	ptr->var_type = symbol_type;
+	ptr->constant = constant;
 	ptr->next = (struct symbol* ) symbol_table;
 	symbol_table = ptr;
 	print_symTable();
@@ -304,6 +311,13 @@ void print_symTable() {
 
 		dataTypeEnum dt = (dataTypeEnum)ptr->var_type;
 		char* data_type;
+		char* is_const;
+		if(ptr->constant == 1) {
+			is_const = "constant";
+		}
+		else {
+			is_const = "";
+		}
 		switch(dt){
 			case t_int:
 			data_type = "int";
@@ -315,7 +329,7 @@ void print_symTable() {
 			data_type = "string";
 			break;
 		}
-		printf(" Symbol { name: %s || Type:%s \n", ptr->var_name, data_type);
+		printf(" Symbol { name: %s || Type: %s %s \n", ptr->var_name,is_const, data_type);
 	}
 	printf("----------------------SYMBOL TABLE----------------------\n");
 }
