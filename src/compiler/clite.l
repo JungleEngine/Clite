@@ -4,20 +4,42 @@
 #include "y.tab.h"
 void yyerror(char *);
 %}
+
+digit [0-9]
+integer [1-9][0-9]*
+
 %%
 
 "int"						{
-							return INT;
+							return T_INT;
 							}
 
 "float"						{
+							return T_FLOAT;
+							}
+"string"					{
+							return T_STRING;
+							}
+
+"while"						return WHILE;
+"if"						return IF;
+"else"						return ELSE;
+"print"						return PRINT;
+
+{integer}"."[0-9]*          {
+							yylval.fValue = atof(yytext);
 							return FLOAT;
 							}
 
+"\""[a-zA-Z0-9]*"\""		{
+							yylval.var_name = (char*) malloc(yyleng + 1);
+							strcpy(yylval.var_name, yytext);
+							return STRING;
+							}
 
-
-[a-z]						{
-							yylval.var_name = yytext;
+[a-zA-Z][a-zA-Z0-9]*		{
+							yylval.var_name = (char*) malloc(yyleng + 1);
+							strcpy(yylval.var_name, yytext);
 							return VARIABLE;
 							}
 
@@ -26,7 +48,7 @@ void yyerror(char *);
 							return INTEGER;
 							}
 
-[1-9][0-9]* 				{
+{integer} 					{
 							yylval.iValue = atoi(yytext);
 							return INTEGER;
 							}
@@ -39,10 +61,6 @@ void yyerror(char *);
 "<="						return	LE;
 "=="						return	EQ;
 "!="						return	NE;
-"while"						return	WHILE;
-"if"						return	IF;
-"else"						return	ELSE;
-"print"						return	PRINT;
 
 [ \t\n]+					;	/* ignore whitespace */
 
