@@ -10,5 +10,4 @@ bool mp_test(int i){
 	map<int,string> mp;
 	mp[i]= "w";
 	return mp[i]=="w";
-
 }
