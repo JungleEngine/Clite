@@ -1,0 +1,29 @@
+1) data types
+2) constant variables
+3) logical expressions
+4) design quadrubles
+5) do while, for loop, switch
+6) block structure {int x; {int y; }}
+
+7) symbol table
+
+8) syntax error handler
+
+9)symantic analyzer for:
+
+9.1) multiple declaration
+9.2) improper use of variable with regard to it's type
+9.3) unused variable
+9.4) used variable before initialization
+
+9.5) [optional] implement type conversion in order to coupe with symantic errors
+	 i.e. (convert integer into real)
+
+
+
+
+10) GUI
+
+
+11) [optional] functions
+12) [optional] array

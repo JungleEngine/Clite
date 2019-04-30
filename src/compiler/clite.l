@@ -20,17 +20,17 @@ void yyerror(char *);
 							yylval.var_name = yytext;
 							return VARIABLE;
 							}
-			
+
 0							{
 							yylval.iValue = atoi(yytext);
 							return INTEGER;
 							}
-			
+
 [1-9][0-9]* 				{
 							yylval.iValue = atoi(yytext);
 							return INTEGER;
 							}
-			
+
 [-()<>=+*/;{}.]				{
 							return *yytext;
 							}
@@ -51,5 +51,5 @@ void yyerror(char *);
 %%
 
 int yywrap(void) {
-return 1;
+	return 1;
 }

@@ -157,7 +157,7 @@ nodeType *opr(int oper, int nops, ...) {
 	p->type = typeOpr;
 	p->opr.oper = oper;
 	p->opr.nops = nops;
-	va_start(ap, nops);
+	va_start(ap, nops); // iterate over operands to store them in the operand array
 	for (i = 0; i < nops; i++)
 		p->opr.op[i] = va_arg(ap, nodeType*);
 	va_end(ap);
