@@ -13,8 +13,8 @@ struct symbol{
 	int var_type;
 	int constant;
 	// TODO: Add value if needed.
-	
-	struct symbol* next;	
+
+	struct symbol* next;
 };
 
 typedef struct symbol symbol;
