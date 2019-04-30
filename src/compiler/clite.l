@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include "clite.h"
 #include "y.tab.h"
-void yyerror(char *);
+#include <string>
+void yyerror(std::string);
 %}
 
 digit [0-9]
@@ -25,6 +26,8 @@ integer [1-9][0-9]*
 							return T_CONST;
 							}
 
+"for"						return FOR;
+"do"						return DO;
 "while"						return WHILE;
 "if"						return IF;
 "else"						return ELSE;

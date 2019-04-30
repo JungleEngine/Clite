@@ -8,15 +8,6 @@
 
 static int lbl;
 
-struct symbol{
-	char* var_name;
-	int var_type;
-	int constant;
-	// TODO: Add value if needed.
-	
-	struct symbol* next;	
-};
-
 typedef struct symbol symbol;
 symbol* symbol_table;
 
@@ -27,24 +18,27 @@ nodeType *id(char* var_name);
 nodeType *con(int value);
 nodeType *conChar(char* value);
 nodeType *flo(float value);
-symbol* insertSymbol(char const* symbol_name, int symbol_type, int constant);
+symbol* insertSymbol(string symbol_name, int symbol_type, bool constant);
 void print_symTable();
 void freeNode(nodeType *p);
 int ex(nodeType *p);
 int yylex(void);
 
-void yyerror(char *s);
+void yyerror(string s);
 int sym[26];	/* symbol table */
 
 
 
 %}
 
+// %code requires{
+// 	#include "sym.hpp"
+// }
 
 %union {
 int iValue; 	/* integer value */
 float fValue;
-int boolean;
+bool boolean;
 char sIndex;	/* symbol table index */
 char* var_name;
 nodeType *nPtr;	/* node pointer */
@@ -53,7 +47,7 @@ nodeType *nPtr;	/* node pointer */
 %token <iValue> INTEGER 
 %token <fValue> FLOAT
 %token <var_name> VARIABLE STRING
-%token WHILE IF PRINT T_CONST
+%token DO WHILE FOR IF PRINT T_CONST
 %token <iValue> T_INT T_FLOAT T_STRING
 %nonassoc IFX
 %nonassoc ELSE
@@ -63,7 +57,7 @@ nodeType *nPtr;	/* node pointer */
 %nonassoc UMINUS
 %type <nPtr> stmt expr stmt_list 
 %type <iValue> type
-%type <boolean> const
+%type <boolean> const 
 
 
 %%
@@ -83,11 +77,16 @@ stmt:
 	| PRINT expr ';'					{ $$ = opr(PRINT, 1, $2); }
 	| const type VARIABLE '=' expr ';'	{ $$ = opr('=', 2, id($3), $5); insertSymbol($3, $2, $1);}
 	| VARIABLE '=' expr ';'				{ $$ = opr('=', 2, id($1), $3); }
+
+	| DO '{' stmt '}' WHILE '(' expr ')' ';'
+										{ $$ = opr(DO, 2, $7, $3);}
+
 	| WHILE '(' expr ')'  stmt 			{ $$ = opr(WHILE, 2, $3, $5); }
+	// | FOR '(' stmt ';' stmt ';' stmt ')' '{'
 	| IF '(' expr ')'  stmt %prec IFX	{ $$ = opr(IF, 2, $3, $5); }
 	| IF '(' expr ')'  stmt ELSE stmt 	{ $$ = opr(IF, 3, $3, $5, $7); }
 	| '{' stmt_list '}' 				{ $$ = $2; }
-	  ;
+	;
 
 const: 
 	T_CONST			{ $$ = 1; }
@@ -129,11 +128,11 @@ type:
 
 #define SIZEOF_NODETYPE ((char *)&p->con - (char *)p)
 
-symbol* insertSymbol(char const* symbol_name, int symbol_type, int constant){
+symbol* insertSymbol(string symbol_name, int symbol_type, bool constant){
 	printf(" Symbol type:%d \n", symbol_type);
-	symbol* ptr = (symbol*) malloc(sizeof(symbol));
-	ptr->var_name = (char*) malloc(strlen(symbol_name) + 1);
-	strcpy(ptr->var_name, symbol_name);
+	// symbol* ptr = (symbol*) malloc(sizeof(symbol));
+	symbol* ptr = new symbol;
+	ptr->var_name =  symbol_name;
 	ptr->var_type = symbol_type;
 	ptr->constant = constant;
 	ptr->next = (struct symbol* ) symbol_table;
@@ -254,6 +253,11 @@ int ex(nodeType *p) {
 			printf("\tjmp\tL%03d\n", lbl1);
 			printf("L%03d:\n", lbl2);
 			break;
+		case DO:
+			cout<<"DO while detected:"<<endl;
+			// cout<<p->opr.op[0]<<endl;
+			// cout<<p->opr.op[1]<<endl;
+			break;
 		case IF:
 			ex(p->opr.op[0]);
 			if (p->opr.nops > 2) {
@@ -319,8 +323,8 @@ void print_symTable() {
 	for(ptr = symbol_table; ptr != (symbol*) 0; ptr = (symbol*) ptr->next){
 
 		dataTypeEnum dt = (dataTypeEnum)ptr->var_type;
-		char* data_type;
-		char* is_const;
+		string data_type;
+		string is_const;
 		if(ptr->constant == 1) {
 			is_const = "constant";
 		}
@@ -338,13 +342,13 @@ void print_symTable() {
 			data_type = "string";
 			break;
 		}
-		printf(" Symbol { name: %s || Type: %s %s \n", ptr->var_name,is_const, data_type);
+		printf(" Symbol { name: %s || Type: %s %s }\n", ptr->var_name.c_str(), is_const.c_str(), data_type.c_str());
 	}
 	printf("----------------------SYMBOL TABLE----------------------\n");
 }
 
-void yyerror(char *s) {
-	fprintf(stdout, "%s\n", s);
+void yyerror(string s) {
+	fprintf(stdout, "%s\n", s.c_str());
 }
 int main(void) {
 	yyparse();
