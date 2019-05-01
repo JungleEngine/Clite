@@ -4,22 +4,14 @@
 #include <string.h>
 #include <stdarg.h>
 #include "clite.h"
+#include "error_handler.cpp"
 #include "sym.hpp"
 
 static int lbl;
 
-struct symbol{
-	char* var_name;
-	int var_type;
-	int constant;
-	// TODO: Add value if needed.
 
-	struct symbol* next;
-};
 
-typedef struct symbol symbol;
-symbol* symbol_table;
-
+SemanticAnalyzer* symbol_table = new SemanticAnalyzer;
 
 /* prototypes */
 nodeType *opr(int oper, int nops, ...);
@@ -27,24 +19,24 @@ nodeType *id(char* var_name);
 nodeType *con(int value);
 nodeType *conChar(char* value);
 nodeType *flo(float value);
-symbol* insertSymbol(char const* symbol_name, int symbol_type, int constant);
-void print_symTable();
 void freeNode(nodeType *p);
 int ex(nodeType *p);
 int yylex(void);
 
-void yyerror(char *s);
 int sym[26];	/* symbol table */
 
 
 
 %}
 
+// %code requires{
+// 	#include "sym.hpp"
+// }
 
 %union {
 int iValue; 	/* integer value */
 float fValue;
-int boolean;
+bool boolean;
 char sIndex;	/* symbol table index */
 char* var_name;
 nodeType *nPtr;	/* node pointer */
@@ -53,7 +45,7 @@ nodeType *nPtr;	/* node pointer */
 %token <iValue> INTEGER 
 %token <fValue> FLOAT
 %token <var_name> VARIABLE STRING
-%token WHILE IF PRINT T_CONST
+%token DO WHILE FOR IF PRINT T_CONST
 %token <iValue> T_INT T_FLOAT T_STRING
 %nonassoc IFX
 %nonassoc ELSE
@@ -63,7 +55,7 @@ nodeType *nPtr;	/* node pointer */
 %nonassoc UMINUS
 %type <nPtr> stmt expr stmt_list 
 %type <iValue> type
-%type <boolean> const
+%type <boolean> const 
 
 
 %%
@@ -79,15 +71,20 @@ function:
 stmt:
 	';'									{ $$ = opr(';', 2, NULL, NULL); }
 	| expr  ';'							{ $$ = $1; }
-	| const type VARIABLE ';'			{ $$ = opr('=', 2, id($3), con(0)); insertSymbol($3, $2, $1);}
+	| const type VARIABLE ';'			{ $$ = opr('=', 2, id($3), con(0)); symbol_table->insertSymbol($3, $2, $1, true);}
 	| PRINT expr ';'					{ $$ = opr(PRINT, 1, $2); }
-	| const type VARIABLE '=' expr ';'	{ $$ = opr('=', 2, id($3), $5); insertSymbol($3, $2, $1);}
+	| const type VARIABLE '=' expr ';'	{ $$ = opr('=', 2, id($3), $5); symbol_table->insertSymbol($3, $2, $1, true);}
 	| VARIABLE '=' expr ';'				{ $$ = opr('=', 2, id($1), $3); }
+
+	| DO '{' stmt '}' WHILE '(' expr ')' ';'
+										{ $$ = opr(DO, 2, $7, $3);}
+
 	| WHILE '(' expr ')'  stmt 			{ $$ = opr(WHILE, 2, $3, $5); }
+	// | FOR '(' stmt ';' stmt ';' stmt ')' '{'
 	| IF '(' expr ')'  stmt %prec IFX	{ $$ = opr(IF, 2, $3, $5); }
 	| IF '(' expr ')'  stmt ELSE stmt 	{ $$ = opr(IF, 3, $3, $5, $7); }
 	| '{' stmt_list '}' 				{ $$ = $2; }
-	  ;
+	;
 
 const: 
 	T_CONST			{ $$ = 1; }
@@ -129,19 +126,6 @@ type:
 
 #define SIZEOF_NODETYPE ((char *)&p->con - (char *)p)
 
-symbol* insertSymbol(char const* symbol_name, int symbol_type, int constant){
-	printf(" Symbol type:%d \n", symbol_type);
-	symbol* ptr = (symbol*) malloc(sizeof(symbol));
-	ptr->var_name = (char*) malloc(strlen(symbol_name) + 1);
-	strcpy(ptr->var_name, symbol_name);
-	ptr->var_type = symbol_type;
-	ptr->constant = constant;
-	ptr->next = (struct symbol* ) symbol_table;
-	symbol_table = ptr;
-	print_symTable();
-	return ptr;
-}
-
 nodeType *con(int value) {
 	nodeType *p;
 	/* allocate node */
@@ -181,7 +165,6 @@ nodeType *flo(float value) {
 }
 
 nodeType *id(char* var_name) {
-
 	nodeType *p;
 	/* allocate node */
 	// if ((p = malloc(sizeof(nodeType))) == NULL)
@@ -254,6 +237,11 @@ int ex(nodeType *p) {
 			printf("\tjmp\tL%03d\n", lbl1);
 			printf("L%03d:\n", lbl2);
 			break;
+		case DO:
+			cout<<"DO while detected:"<<endl;
+			// cout<<p->opr.op[0]<<endl;
+			// cout<<p->opr.op[1]<<endl;
+			break;
 		case IF:
 			ex(p->opr.op[0]);
 			if (p->opr.nops > 2) {
@@ -313,39 +301,11 @@ int ex(nodeType *p) {
 	return 0;
 }
 
-void print_symTable() {
-	printf("----------------------SYMBOL TABLE----------------------\n");
-	symbol* ptr;
-	for(ptr = symbol_table; ptr != (symbol*) 0; ptr = (symbol*) ptr->next){
-
-		dataTypeEnum dt = (dataTypeEnum)ptr->var_type;
-		char* data_type;
-		char* is_const;
-		if(ptr->constant == 1) {
-			is_const = "constant";
-		}
-		else {
-			is_const = "";
-		}
-		switch(dt){
-			case t_int:
-			data_type = "int";
-			break;
-			case t_float:
-			data_type = "float";
-			break;
-			case t_string:
-			data_type = "string";
-			break;
-		}
-		printf(" Symbol { name: %s || Type: %s %s \n", ptr->var_name,is_const, data_type);
-	}
-	printf("----------------------SYMBOL TABLE----------------------\n");
+void yyerror(string s) {
+    extern int yylineno;
+	fprintf(stdout, "%s at line:%d\n", s.c_str(), yylineno);
 }
 
-void yyerror(char *s) {
-	fprintf(stdout, "%s\n", s);
-}
 int main(void) {
 	yyparse();
 	return 0;
