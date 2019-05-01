@@ -3,15 +3,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "clite.h"
 #include "error_handler.cpp"
-#include "sym.hpp"
+#include "semantic_analyzer.hpp"
 
 static int lbl;
 
 
 
-SemanticAnalyzer* symbol_table = new SemanticAnalyzer;
+SemanticAnalyzer* sem_analyzer = new SemanticAnalyzer;
 
 /* prototypes */
 nodeType *opr(int oper, int nops, ...);
@@ -71,10 +70,15 @@ function:
 stmt:
 	';'									{ $$ = opr(';', 2, NULL, NULL); }
 	| expr  ';'							{ $$ = $1; }
-	| const type VARIABLE ';'			{ $$ = opr('=', 2, id($3), con(0)); symbol_table->insertSymbol($3, $2, $1, true);}
+	| const type VARIABLE ';'			{ $$ = opr('=', 2, id($3), con(0)); sem_analyzer->insertSymbol($3, $2, $1);}
 	| PRINT expr ';'					{ $$ = opr(PRINT, 1, $2); }
-	| const type VARIABLE '=' expr ';'	{ $$ = opr('=', 2, id($3), $5); symbol_table->insertSymbol($3, $2, $1, true);}
-	| VARIABLE '=' expr ';'				{ $$ = opr('=', 2, id($1), $3); }
+	| const type VARIABLE '=' expr ';'	{ $$ = opr('=', 2, id($3), $5); sem_analyzer->insertSymbol($3, $2, $1);}
+	| VARIABLE '=' expr ';'				{
+
+                                            sem_analyzer->assignmentValidity($1, $3);
+
+                                            $$ = opr('=', 2, id($1), $3);
+                                        }
 
 	| DO '{' stmt '}' WHILE '(' expr ')' ';'
 										{ $$ = opr(DO, 2, $7, $3);}
