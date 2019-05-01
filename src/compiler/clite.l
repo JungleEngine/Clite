@@ -6,7 +6,8 @@
 #include "error_codes.h"
 
 void yyerror(std::string);
-
+void addScope();
+void removeScope();
 std::string getErrorMessage(int error_code);
 // SemanticAnalyzer* sem_analyzer;
 %}
@@ -76,8 +77,8 @@ integer [1-9][0-9]*
 							}
 
 
-"{"							{ /*sem_analyzer->addScope();*/	return *yytext;}
-"}"							{ /*sem_analyzer->removeScope();*/ cout<<"scope has ended"<<endl;	return *yytext;}
+"{"							{ addScope();	return *yytext;}
+"}"							{ removeScope(); cout<<"scope has ended"<<endl;	return *yytext;}
 
 [-()<>=+*/;.]				{
 							return *yytext;

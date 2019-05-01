@@ -30,6 +30,16 @@ class SemanticAnalyzer{
 public:
     vector<map<string, symbol*> > symbol_table;
 
+
+    void addScope(){
+        map<string, symbol*> mp;
+        this->symbol_table.push_back(mp);    }
+
+    void removeScope(){
+        this->symbol_table.pop_back();
+    }
+
+
     void assignmentValidity(string left, nodeType* right){
         // Check if left node exist in this scope.
         bool valid = this->checkValidUsage(left);
@@ -67,7 +77,6 @@ public:
 
         }
     }
-    // Printing the table.
     void insertSymbol(string symbol_name, int symbol_type, bool constant){
 
         // Check if exists before.
@@ -78,23 +87,17 @@ public:
                 ptr->var_type = symbol_type;
                 ptr->constant = constant;
 
-                map<string, symbol*> mp;
-
-                mp[ptr->var_name] = ptr;
-                this->symbol_table.push_back(mp);
-
+                if (this->symbol_table.size() == 0) {
+                    map < string, symbol * > mp;
+                    mp[ptr->var_name] = ptr;
+                    this->symbol_table.push_back(mp);
+                }else{
+                    this->symbol_table[this->symbol_table.size() - 1][ptr->var_name] = ptr;
+                }
             }else{
                 string error = "variable: " + symbol_name + " declared before in this scope";
                 yyerror(error);
             }
-
-//        }else{
-//            bool valid = checkValidUsage(symbol_name);
-//            if(!valid){
-//                string error = "variable: " + symbol_name + " is not declared";
-//                yyerror(error);
-//            }
-//        }
 
         this->printSymbolTable();
 
@@ -119,12 +122,17 @@ public:
 
             return true;
     }
+
+    // Printing the table.
     void printSymbolTable(){
         printf("----------------------SYMBOL TABLE----------------------\n");
+
+
         int scope = 0;
 
         vector<map<string, symbol*> >::iterator it;
         for(it = this->symbol_table.begin(); it != this->symbol_table.end(); it++){
+            printf("--------------------------------------------------------\n");
             printf("Scope: %d\n", scope++);
 
             map<string, symbol*>::iterator mp_it;
@@ -151,6 +159,8 @@ public:
                     }
                 printf("{ Type: %s %s | Name: %s }\n",is_const.c_str(), data_type.c_str(), mp_it->first.c_str());
             }
+            printf("--------------------------------------------------------\n");
+
         }
     }
 

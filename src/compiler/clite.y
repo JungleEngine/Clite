@@ -22,6 +22,8 @@ void freeNode(nodeType *p);
 int ex(nodeType *p);
 int yylex(void);
 
+void addScope();
+void removeScope();
 int sym[26];	/* symbol table */
 
 
@@ -323,6 +325,17 @@ int ex(nodeType *p) {
 void yyerror(string s) {
     extern int yylineno;
 	fprintf(stdout, "%s at line:%d\n", s.c_str(), yylineno);
+}
+
+
+void addScope(){
+	printf("Adding new scope\n");
+	sem_analyzer->addScope();
+}
+
+void removeScope(){
+	printf("Removing scope\n");
+	sem_analyzer->removeScope();
 }
 
 int main(void) {
