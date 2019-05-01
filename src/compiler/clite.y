@@ -3,9 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "clite.h"
 #include "error_handler.cpp"
-#include "sym.hpp"
+#include "semantic_analyzer.hpp"
 
 static int lbl;
 
@@ -30,7 +29,7 @@ int sym[26];	/* symbol table */
 %}
 
 // %code requires{
-// 	#include "sym.hpp"
+// 	#include "semantic_analyzer.hpp"
 // }
 
 %union {
@@ -93,7 +92,12 @@ exp1:
 	;
 
 exp2:
-		VARIABLE '=' expr 				{ $$ = opr('=', 2, id($1), $3); }
+		VARIABLE '=' expr 				{
+
+                                            sem_analyzer->assignmentValidity($1, $3);
+
+                                            $$ = opr('=', 2, id($1), $3);
+                                        }
 	|	expr 							{ $$ = $1; }
 	;
 

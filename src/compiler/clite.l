@@ -4,9 +4,11 @@
 #include "y.tab.h"
 #include <string>
 #include "error_codes.h"
+
 void yyerror(std::string);
 
 std::string getErrorMessage(int error_code);
+// SemanticAnalyzer* sem_analyzer;
 %}
 %option yylineno
 digit [0-9]
@@ -36,7 +38,7 @@ integer [1-9][0-9]*
 "else"						return ELSE;
 "print"						return PRINT;
 
-{integer}"."[0-9]*          {
+{integer}"."{digit}*          {
 							yylval.fValue = atof(yytext);
 							return FLOAT;
 							}
@@ -73,7 +75,11 @@ integer [1-9][0-9]*
 							return INTEGER;
 							}
 
-[-()<>=+*/;{}.]				{
+
+"{"							{ /*sem_analyzer->addScope();*/	return *yytext;}
+"}"							{ /*sem_analyzer->removeScope();*/ cout<<"scope has ended"<<endl;	return *yytext;}
+
+[-()<>=+*/;.]				{
 							return *yytext;
 							}
 
