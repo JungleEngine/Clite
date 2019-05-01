@@ -6,10 +6,9 @@ using namespace std;
 
 
 bool mp_test(int i){
-	// cout<<"map map"<<endl;
-	map<int,string> mp;
-	mp[i]= "w";
-	return mp[i]=="w";
+	cout<<"map map"<<endl;
+	cout<<"ls ls"<<endl;
+	return true;
 }
 
 struct symbol{

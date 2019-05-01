@@ -55,7 +55,7 @@ nodeType *nPtr;	/* node pointer */
 %left '+' '-'
 %left '*' '/'
 %nonassoc UMINUS
-%type <nPtr> stmt expr stmt_list 
+%type <nPtr> stmt expr stmt_list exp1 exp2
 %type <iValue> type
 %type <boolean> const 
 
@@ -66,26 +66,37 @@ program:
 	function { exit(0); }
 	;
 function:
-		function stmt { mp_test(1); ex($2); freeNode($2); }
+		function stmt { mp_test(1); cout<<"as"<<endl;cout<<$2<<"hh"<<endl; ex($2); freeNode($2); }
 	| /* NULL */
 	;
 
 stmt:
-	';'									{ $$ = opr(';', 2, NULL, NULL); }
-	| expr  ';'							{ $$ = $1; }
-	| const type VARIABLE ';'			{ $$ = opr('=', 2, id($3), con(0)); insertSymbol($3, $2, $1);}
-	| PRINT expr ';'					{ $$ = opr(PRINT, 1, $2); }
-	| const type VARIABLE '=' expr ';'	{ $$ = opr('=', 2, id($3), $5); insertSymbol($3, $2, $1);}
-	| VARIABLE '=' expr ';'				{ $$ = opr('=', 2, id($1), $3); }
+	';'									{ $$ = opr(';', 2, NULL, NULL); }	
+	| exp1 ';'							{ $$ = $1; }
 
 	| DO '{' stmt '}' WHILE '(' expr ')' ';'
 										{ $$ = opr(DO, 2, $7, $3);}
 
 	| WHILE '(' expr ')'  stmt 			{ $$ = opr(WHILE, 2, $3, $5); }
-	// | FOR '(' stmt ';' stmt ';' stmt ')' '{'
+
+	| FOR '(' exp1 ';' exp1 ';' exp2 ')' stmt
+										{ $$ = opr(FOR, 4, $3, $5, $7, $9 ); }
+
 	| IF '(' expr ')'  stmt %prec IFX	{ $$ = opr(IF, 2, $3, $5); }
 	| IF '(' expr ')'  stmt ELSE stmt 	{ $$ = opr(IF, 3, $3, $5, $7); }
+	| PRINT expr ';'					{ $$ = opr(PRINT, 1, $2); }
 	| '{' stmt_list '}' 				{ $$ = $2; }
+	;
+
+exp1:
+		const type VARIABLE				{ $$ = opr('=', 2, id($3), con(0)); insertSymbol($3, $2, $1); }
+	|	const type VARIABLE '=' expr 	{ $$ = opr('=', 2, id($3), $5); insertSymbol($3, $2, $1); }
+	|	exp2 							{ $$ = $1; }
+	;
+
+exp2:
+		VARIABLE '=' expr 				{ $$ = opr('=', 2, id($1), $3); }
+	|	expr 							{ $$ = $1; }
 	;
 
 const: 
@@ -234,6 +245,7 @@ void freeNode(nodeType *p) {
 
 
 int ex(nodeType *p) {
+	cout<<"ex"<<endl;
 	int lbl1, lbl2;
 	if (!p) return 0;
 	switch (p->type) {
@@ -257,6 +269,9 @@ int ex(nodeType *p) {
 			cout<<"DO while detected:"<<endl;
 			// cout<<p->opr.op[0]<<endl;
 			// cout<<p->opr.op[1]<<endl;
+			break;
+		case FOR:
+			cout<<"FOR loop detected:"<<endl;
 			break;
 		case IF:
 			ex(p->opr.op[0]);
