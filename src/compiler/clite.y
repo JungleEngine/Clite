@@ -4,13 +4,14 @@
 #include <string.h>
 #include <stdarg.h>
 #include "clite.h"
+#include "error_handler.cpp"
 #include "sym.hpp"
 
 static int lbl;
 
-typedef struct symbol symbol;
-symbol* symbol_table;
 
+
+SemanticAnalyzer* sem_analyzer = new SemanticAnalyzer;
 
 /* prototypes */
 nodeType *opr(int oper, int nops, ...);
@@ -18,13 +19,10 @@ nodeType *id(char* var_name);
 nodeType *con(int value);
 nodeType *conChar(char* value);
 nodeType *flo(float value);
-symbol* insertSymbol(string symbol_name, int symbol_type, bool constant);
-void print_symTable();
 void freeNode(nodeType *p);
 int ex(nodeType *p);
 int yylex(void);
 
-void yyerror(string s);
 int sym[26];	/* symbol table */
 
 
@@ -66,7 +64,7 @@ program:
 	function { exit(0); }
 	;
 function:
-		function stmt { mp_test(1); cout<<"as"<<endl;cout<<$2<<"hh"<<endl; ex($2); freeNode($2); }
+		function stmt { mp_test(1); cout<<"as"<<endl; ex($2); freeNode($2); }
 	| /* NULL */
 	;
 
@@ -89,8 +87,8 @@ stmt:
 	;
 
 exp1:
-		const type VARIABLE				{ $$ = opr('=', 2, id($3), con(0)); insertSymbol($3, $2, $1); }
-	|	const type VARIABLE '=' expr 	{ $$ = opr('=', 2, id($3), $5); insertSymbol($3, $2, $1); }
+		const type VARIABLE				{ $$ = opr('=', 2, id($3), con(0)); sem_analyzer->insertSymbol($3, $2, $1); }
+	|	const type VARIABLE '=' expr 	{ $$ = opr('=', 2, id($3), $5); sem_analyzer->insertSymbol($3, $2, $1); }
 	|	exp2 							{ $$ = $1; }
 	;
 
@@ -139,19 +137,6 @@ type:
 
 #define SIZEOF_NODETYPE ((char *)&p->con - (char *)p)
 
-symbol* insertSymbol(string symbol_name, int symbol_type, bool constant){
-	printf(" Symbol type:%d \n", symbol_type);
-	// symbol* ptr = (symbol*) malloc(sizeof(symbol));
-	symbol* ptr = new symbol;
-	ptr->var_name =  symbol_name;
-	ptr->var_type = symbol_type;
-	ptr->constant = constant;
-	ptr->next = (struct symbol* ) symbol_table;
-	symbol_table = ptr;
-	print_symTable();
-	return ptr;
-}
-
 nodeType *con(int value) {
 	nodeType *p;
 	/* allocate node */
@@ -191,7 +176,6 @@ nodeType *flo(float value) {
 }
 
 nodeType *id(char* var_name) {
-
 	nodeType *p;
 	/* allocate node */
 	// if ((p = malloc(sizeof(nodeType))) == NULL)
@@ -215,7 +199,7 @@ nodeType *opr(int oper, int nops, ...) {
 	p = new nodeType();
 	if(p == NULL)
 	yyerror("out of memory");
-	p->opr.op = new nodeType*;
+	p->opr.op = new nodeType*[nops];
 	if(p->opr.op == NULL)
 	yyerror("out of memory");
 
@@ -332,39 +316,11 @@ int ex(nodeType *p) {
 	return 0;
 }
 
-void print_symTable() {
-	printf("----------------------SYMBOL TABLE----------------------\n");
-	symbol* ptr;
-	for(ptr = symbol_table; ptr != (symbol*) 0; ptr = (symbol*) ptr->next){
-
-		dataTypeEnum dt = (dataTypeEnum)ptr->var_type;
-		string data_type;
-		string is_const;
-		if(ptr->constant == 1) {
-			is_const = "constant";
-		}
-		else {
-			is_const = "";
-		}
-		switch(dt){
-			case t_int:
-			data_type = "int";
-			break;
-			case t_float:
-			data_type = "float";
-			break;
-			case t_string:
-			data_type = "string";
-			break;
-		}
-		printf(" Symbol { name: %s || Type: %s %s }\n", ptr->var_name.c_str(), is_const.c_str(), data_type.c_str());
-	}
-	printf("----------------------SYMBOL TABLE----------------------\n");
-}
-
 void yyerror(string s) {
-	fprintf(stdout, "%s\n", s.c_str());
+    extern int yylineno;
+	fprintf(stdout, "%s at line:%d\n", s.c_str(), yylineno);
 }
+
 int main(void) {
 	yyparse();
 	return 0;
