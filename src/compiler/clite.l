@@ -35,6 +35,10 @@ integer [1-9][0-9]*
 "for"						return FOR;
 "do"						return DO;
 "while"						return WHILE;
+"switch"					return SWITCH;
+"case"						return CASE;
+":"							return *yytext;
+"default"					return DEFAULT;
 "if"						return IF;
 "else"						return ELSE;
 "print"						return PRINT;

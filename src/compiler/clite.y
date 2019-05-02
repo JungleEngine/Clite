@@ -46,7 +46,7 @@ nodeType *nPtr;	/* node pointer */
 %token <iValue> INTEGER 
 %token <fValue> FLOAT
 %token <var_name> VARIABLE STRING
-%token DO WHILE FOR IF PRINT T_CONST
+%token DO WHILE FOR IF PRINT T_CONST SWITCH CASE DEFAULT
 %token <iValue> T_INT T_FLOAT T_STRING
 %nonassoc IFX
 %nonassoc ELSE
@@ -54,7 +54,7 @@ nodeType *nPtr;	/* node pointer */
 %left '+' '-'
 %left '*' '/'
 %nonassoc UMINUS
-%type <nPtr> stmt expr stmt_list exp1 exp2
+%type <nPtr> stmt expr stmt_list exp1 exp2 switch_statement num_exp switch_block
 %type <iValue> type
 %type <boolean> const 
 
@@ -83,8 +83,25 @@ stmt:
 
 	| IF '(' expr ')'  stmt %prec IFX	{ $$ = opr(IF, 2, $3, $5); }
 	| IF '(' expr ')'  stmt ELSE stmt 	{ $$ = opr(IF, 3, $3, $5, $7); }
+	| switch_statement					{ $$ = $1; }
 	| PRINT expr ';'					{ $$ = opr(PRINT, 1, $2); }
 	| '{' stmt_list '}' 				{ $$ = $2; }
+	;
+
+
+switch_statement:
+	SWITCH '(' num_exp ')' '{' switch_block '}' 
+						{ $$ = opr(SWITCH, 2 , $3, $6); }
+	;
+
+switch_block:
+	  CASE num_exp ':' stmt switch_block{ $$ = opr(CASE, 3, $2, $4, $5); }
+	| DEFAULT	':' stmt				{ $$ = opr(DEFAULT,1, $3); }
+	| /* NULL */						{ $$ = opr(';',2, NULL, NULL); }
+	;
+
+num_exp:								  /* if not numerical expression throw an error */
+	  exp2								{ /*TODO: check if numerical expression*/$$ = $1;}
 	;
 
 exp1:
