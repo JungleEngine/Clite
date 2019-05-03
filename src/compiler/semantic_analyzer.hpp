@@ -47,6 +47,16 @@ public:
             yyerror(error);
         }else{
 
+            // Valid usage.
+            // Check valid assignment.
+            // Get last assigned type.
+            int left_type = 0;
+            bool left_is_constant = false;
+            this->getLastType(left, left_type, left_is_constant);
+
+            printf("type of left is:%s %s  \n", getTypeNameConstant(left_is_constant).c_str(),
+                   getTypeNameFromCode(left_type).c_str());
+
             if(right->type = typeId) {
                 string right_var_name = right->id.var_name;
                 bool valid = this->checkValidUsage(right_var_name);
@@ -54,24 +64,28 @@ public:
                     string error = "Undefined variable " + right_var_name;
                     yyerror(error);
                 }
-            }
 
-            // Valid usage.
-            // Check valid assignment.
-            // Get last assigned type.
-            int left_type = 0;
-            bool is_constant = false;
-            this->getLastType(left, left_type, is_constant);
+                int right_type = 0;
+                bool right_is_constant = false;
+                this->getLastType(right_var_name, right_type, right_is_constant);
 
-            printf("type of left is:%s %s  \n", getTypeNameConstant(is_constant).c_str(),
-                   getTypeNameFromCode(left_type).c_str());
-
-            if(left_type == t_int && right->type != typeCon     ||
-               left_type == t_float && right->type != typeFloat ||
-               left_type == t_string && right->type != typeChar) {
+                if(left_type == t_int && right_type != t_int     ||
+                   left_type == t_float && right_type != t_float ||
+                   left_type == t_string && right_type != t_string) {
                 
-                string error = "Type mismatch! Expected " + getTypeNameFromCode(left_type) + " type";
-                yyerror(error);
+                    string error = "Type mismatch! Expected " + getTypeNameFromCode(left_type) + " type";
+                    yyerror(error);
+                }
+
+            } else {
+
+                if(left_type == t_int && right->type != typeCon     ||
+                   left_type == t_float && right->type != typeFloat ||
+                   left_type == t_string && right->type != typeChar) {
+                    
+                    string error = "Type mismatch! Expected " + getTypeNameFromCode(left_type) + " type";
+                    yyerror(error);
+                }
             }
         }
     }
