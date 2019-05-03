@@ -12,15 +12,14 @@ void yyerror(string s);
 
 bool mp_test(int i){
 	cout<<"map map"<<endl;
-	cout<<"ls ls"<<endl;
 	return true;
 }
 
 class symbol
 {
 public:
-    string var_name;
-    int var_type;
+    string name;
+    int type;
     bool constant;
 
 };
@@ -44,9 +43,19 @@ public:
         // Check if left node exist in this scope.
         bool valid = this->checkValidUsage(left);
         if(!valid){
-            string error = "variable: " + left + " used before declaration before in this scope";
+            string error = "Undefined variable " + left;
             yyerror(error);
         }else{
+
+            if(right->type = typeId) {
+                string right_var_name = right->id.var_name;
+                bool valid = this->checkValidUsage(right_var_name);
+                if(!valid) {
+                    string error = "Undefined variable " + right_var_name;
+                    yyerror(error);
+                }
+            }
+
             // Valid usage.
             // Check valid assignment.
             // Get last assigned type.
@@ -54,24 +63,26 @@ public:
             bool is_constant = false;
             this->getLastType(left, left_type, is_constant);
 
-
-            typedef enum { typeCon, typeChar, typeFloat, typeId, typeOpr } nodeEnum;
-
-            int right_type = right->type;
-
             printf("type of left is:%s %s  \n", getTypeNameConstant(is_constant).c_str(),
                    getTypeNameFromCode(left_type).c_str());
 
+            if(left_type == t_int && right->type != typeCon     ||
+               left_type == t_float && right->type != typeFloat ||
+               left_type == t_string && right->type != typeChar) {
+                
+                string error = "Type mismatch! Expected " + getTypeNameFromCode(left_type) + " type";
+                yyerror(error);
+            }
         }
     }
 
-    void getLastType(string& var_name, int& type, bool& is_constant){
+    void getLastType(string& name, int& type, bool& is_constant){
 
         for (int i = this->symbol_table.size() - 1; i >=0; i--){
             // If the symbol was found.
-            if(this->symbol_table[i].count(var_name)){
-                type = this->symbol_table[i][var_name]->var_type;
-                is_constant = this->symbol_table[i][var_name]->constant;
+            if(this->symbol_table[i].count(name)){
+                type = this->symbol_table[i][name]->type;
+                is_constant = this->symbol_table[i][name]->constant;
             return;
             }
 
@@ -83,16 +94,16 @@ public:
             bool valid = checkValidDeclaration(symbol_name);
             if(valid) {
                 symbol* ptr = new symbol;
-                ptr->var_name =  symbol_name;
-                ptr->var_type = symbol_type;
+                ptr->name = symbol_name;
+                ptr->type = symbol_type;
                 ptr->constant = constant;
 
                 if (this->symbol_table.size() == 0) {
                     map < string, symbol * > mp;
-                    mp[ptr->var_name] = ptr;
+                    mp[ptr->name] = ptr;
                     this->symbol_table.push_back(mp);
                 }else{
-                    this->symbol_table[this->symbol_table.size() - 1][ptr->var_name] = ptr;
+                    this->symbol_table[this->symbol_table.size() - 1][ptr->name] = ptr;
                 }
             }else{
                 string error = "variable: " + symbol_name + " declared before in this scope";
@@ -106,7 +117,7 @@ public:
     bool checkValidUsage(string symbol_name){
         // Valid if defined in any of the above scopes.
         if(symbol_table.size() != 0){
-            for (int i = 0; i < this->symbol_table.size(); i ++){
+            for (int i = 0; i < this->symbol_table.size(); i++){
                 if(this->symbol_table[i].count(symbol_name)){
                     return true;
                 }
@@ -137,7 +148,7 @@ public:
 
             map<string, symbol*>::iterator mp_it;
             for( auto mp_it = (*it).begin(); mp_it != (*it).end(); mp_it++){
-                    dataTypeEnum dt = (dataTypeEnum)mp_it->second->var_type;
+                    dataTypeEnum dt = (dataTypeEnum)mp_it->second->type;
                     string data_type;
                     string is_const;
                     if(mp_it->second->constant == 1) {

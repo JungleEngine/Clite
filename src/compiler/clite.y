@@ -112,9 +112,7 @@ exp1:
 
 exp2:
 		VARIABLE '=' expr 				{
-
                                             sem_analyzer->assignmentValidity($1, $3);
-
                                             $$ = opr('=', 2, id($1), $3);
                                         }
 	|	expr 							{ $$ = $1; }

@@ -43,7 +43,7 @@ integer [1-9][0-9]*
 "else"						return ELSE;
 "print"						return PRINT;
 
-{integer}"."{digit}*          {
+{integer}"."{digit}*        {
 							yylval.fValue = atof(yytext);
 							return FLOAT;
 							}
