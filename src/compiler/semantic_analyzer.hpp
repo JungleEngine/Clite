@@ -57,7 +57,7 @@ public:
             printf("type of left is:%s %s  \n", getTypeNameConstant(left_is_constant).c_str(),
                    getTypeNameFromCode(left_type).c_str());
 
-            if(right->type = typeId) {
+            if(right->type == typeId) {
                 string right_var_name = right->id.var_name;
                 bool valid = this->checkValidUsage(right_var_name);
                 if(!valid) {
@@ -82,7 +82,6 @@ public:
                 if(left_type == t_int && right->type != typeCon     ||
                    left_type == t_float && right->type != typeFloat ||
                    left_type == t_string && right->type != typeChar) {
-                    
                     string error = "Type mismatch! Expected " + getTypeNameFromCode(left_type) + " type";
                     yyerror(error);
                 }

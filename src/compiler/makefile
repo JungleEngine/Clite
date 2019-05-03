@@ -8,5 +8,5 @@ y.tab.c: clite.y
 	yacc -dv clite.y
 
 clean: 
-	rm -rf lex.yy.c y.tab.c y.tab.h clite clite.dSYM
+	rm -rf lex.yy.c y.tab.c y.tab.h clite y.output
 
