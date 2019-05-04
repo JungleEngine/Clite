@@ -65,7 +65,7 @@ program:
 	function { exit(0); }
 	;
 function:
-		function stmt { mp_test(1); cout<<"as"<<endl; ex($2); freeNode($2); }
+		function stmt { ex($2); freeNode($2); }
 	| /* NULL */
 	;
 
@@ -106,15 +106,15 @@ num_exp:								  /* if not numerical expression throw an error */
 
 exp1:
 		const type VARIABLE				{ $$ = opr('=', 2, id($3), con(0)); sem_analyzer->insertSymbol($3, $2, $1); }
-	|	const type VARIABLE '=' expr 	{ $$ = opr('=', 2, id($3), $5); sem_analyzer->insertSymbol($3, $2, $1); }
+	|	const type VARIABLE '=' expr 	{ $$ = opr('=', 2, id($3), $5); sem_analyzer->insertSymbol($3, $2, $1);
+	                                    sem_analyzer->assignmentValidity($3, $5); /* Must be called after insert symbol*/
+	                                    }
 	|	exp2 							{ $$ = $1; }
 	;
 
 exp2:
 		VARIABLE '=' expr 				{
-
                                             sem_analyzer->assignmentValidity($1, $3);
-
                                             $$ = opr('=', 2, id($1), $3);
                                         }
 	|	expr 							{ $$ = $1; }
@@ -252,7 +252,6 @@ void freeNode(nodeType *p) {
 
 
 int ex(nodeType *p) {
-	cout<<"ex"<<endl;
 	int lbl1, lbl2;
 	if (!p) return 0;
 	switch (p->type) {
