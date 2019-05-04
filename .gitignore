@@ -38,3 +38,8 @@ y.tab.h
 clite
 clite.dSYM
 *.output
+
+
+cmake-build-debug/
+*.idea
+*.idea/
