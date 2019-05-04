@@ -93,6 +93,12 @@ integer [1-9][0-9]*
 "=="						return	EQ;
 "!="						return	NE;
 
+
+"+="						return PLSEQ;
+"-="						return MINEQ;
+"/="						return DIVEQ;
+"*="						return MULEQ;
+
 [ \t\n]+					;	/* ignore whitespace */
 
 

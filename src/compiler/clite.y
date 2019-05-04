@@ -47,6 +47,7 @@ nodeType *nPtr;	/* node pointer */
 %token <fValue> FLOAT
 %token <var_name> VARIABLE STRING
 %token DO WHILE FOR IF PRINT T_CONST SWITCH CASE DEFAULT
+%token PLSEQ MINEQ DIVEQ MULEQ	//+= -= /= *=
 %token <iValue> T_INT T_FLOAT T_STRING
 %nonassoc IFX
 %nonassoc ELSE
@@ -65,7 +66,7 @@ program:
 	function { exit(0); }
 	;
 function:
-		function stmt { ex($2); freeNode($2); }
+		function stmt 					{ ex($2); freeNode($2); }
 	| /* NULL */
 	;
 
@@ -86,6 +87,7 @@ stmt:
 	| switch_statement					{ $$ = $1; }
 	| PRINT expr ';'					{ $$ = opr(PRINT, 1, $2); }
 	| '{' stmt_list '}' 				{ $$ = $2; }
+	| 	error ';'					{ $$ = NULL; yyerrok; }
 	;
 
 
@@ -117,6 +119,10 @@ exp2:
                                             sem_analyzer->assignmentValidity($1, $3);
                                             $$ = opr('=', 2, id($1), $3);
                                         }
+    |	VARIABLE PLSEQ expr 			{ /*TODO: check for validity*/$$ = opr(PLSEQ, 2, id($1), $3);}
+    |	VARIABLE MINEQ expr 			{ /*TODO: check for validity*/$$ = opr(MINEQ, 2, id($1), $3);}
+    |	VARIABLE MULEQ expr 			{ /*TODO: check for validity*/$$ = opr(MULEQ, 2, id($1), $3);}
+    |	VARIABLE DIVEQ expr 			{ /*TODO: check for validity*/$$ = opr(DIVEQ, 2, id($1), $3);}
 	|	expr 							{ $$ = $1; }
 	;
 

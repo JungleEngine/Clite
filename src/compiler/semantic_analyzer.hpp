@@ -73,16 +73,18 @@ public:
                    left_type == t_float && right_type != t_float ||
                    left_type == t_string && right_type != t_string) {
                 
-                    string error = "Type mismatch! Expected " + getTypeNameFromCode(left_type) + " type";
+                    string error = "Type mismatch! Expected " + getTypeNameFromCode(left_type) + " type" 
+                + " got " + getTypeNameFromCode(right_type) + " instead";
                     yyerror(error);
                 }
 
             } else {
-
+                //TODO: this is wrong in case of type operation
                 if(left_type == t_int && right->type != typeCon     ||
                    left_type == t_float && right->type != typeFloat ||
                    left_type == t_string && right->type != typeChar) {
-                    string error = "Type mismatch! Expected " + getTypeNameFromCode(left_type) + " type";
+                    string error = "Type mismatch! Expected " + getTypeNameFromCode(left_type) + " type"
+                + " got " + to_string(right->type) + " instead";
                     yyerror(error);
                 }
             }
