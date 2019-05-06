@@ -101,7 +101,7 @@ integer [1-9][0-9]*
 
 [ \t\n]+					;	/* ignore whitespace */
 
-
+"//".*						{};
 .							{
                             yyerror("Unknown character");
                             printf("value :%s:", yytext);
