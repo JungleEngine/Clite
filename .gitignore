@@ -46,4 +46,5 @@ cmake-build-debug/
 
 .fuse*
 __pycache__/*
+__pycache__
 *.txt
