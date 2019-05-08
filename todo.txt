@@ -1,7 +1,7 @@
 #) data types (int#, float#, string# )
 #) constant variables 
 2) evaluating expressions
-3) logical expressions
+3) make NOT operator uni like UMINUS
 4) design quadrubles
 5) do while#, for loop#, switch#
 6) block structure {int x; {int y; }}#
@@ -22,10 +22,17 @@
 
 
 
-
 10) GUI
+
+**) add boolean type and add it's necessary checks
+
+**) this should be valid:
+	const int x = 3; 
+**) this should be invalid:
+	x = 4;
 
 
 11) [optional] functions
 12) [optional] array
 13) [optional] comments
+14) [optional] show warning for 5 = x;
