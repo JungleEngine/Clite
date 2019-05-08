@@ -14,6 +14,7 @@ std::string getErrorMessage(int error_code);
 %option yylineno
 digit [0-9]
 integer [1-9][0-9]*
+endMC	"*/"
 
 %%
 
@@ -31,6 +32,17 @@ integer [1-9][0-9]*
 "const"						{
 							return T_CONST;
 							}
+
+"bool"						{
+							return T_BOOL;
+							}
+"true"|"false"				{ 
+							string val(yytext);
+							yylval.boolean = val == "true";
+							cout<<yylval.boolean<<endl;
+							return TRUEFALSE;
+							}			
+
 
 "for"						return FOR;
 "do"						return DO;
@@ -88,20 +100,24 @@ integer [1-9][0-9]*
 							return *yytext;
 							}
 
-">="						return	GE;
-"<="						return	LE;
-"=="						return	EQ;
-"!="						return	NE;
+">="						return	OGE;
+"<="						return	OLE;
+"=="						return	OEQ;
+"!="						return	ONE;
 
 
-"+="						return PLSEQ;
-"-="						return MINEQ;
-"/="						return DIVEQ;
-"*="						return MULEQ;
+"+="						return OPLSEQ;
+"++"						return OPLSPLS;
+"--"						return OMINMIN;
+"-="						return OMINEQ;
+"/="						return ODIVEQ;
+"*="						return OMULEQ;
 
 [ \t\n]+					;	/* ignore whitespace */
 
 "//".*						{};
+"/*"[^*/]*"*/"				{};
+
 .							{
                             yyerror("Unknown character");
                             printf("value :%s:", yytext);

@@ -13,18 +13,19 @@ using namespace std;
 
 
 string getTypeNameFromCode(int type_code){
-    switch(type_code){
-        case t_int:
-            return "int";
-        case t_float:
-            return "float";
-        case t_string:
-            return "string";
-    }
-
+	switch(type_code){
+		case t_int:
+			return "int";
+		case t_float:
+			return "float";
+		case t_string:
+			return "string";
+		case t_bool:
+			return "boolean";
+	}
+	return "unkown";
 }
 
-
 string getTypeNameConstant(bool is_constant){
-    return is_constant? "constant":"";
+	return is_constant? "constant":"";
 }

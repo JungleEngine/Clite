@@ -1,5 +1,43 @@
-typedef enum { typeCon, typeChar, typeFloat, typeId, typeOpr } nodeEnum;
-typedef enum { t_int, t_float, t_string } dataTypeEnum;
+typedef enum { typeCon, typeChar, typeFloat, typeBool, typeId, typeOpr } nodeEnum;
+typedef enum { t_int, t_float, t_string, t_bool } dataTypeEnum;
+typedef enum { 
+
+
+
+UMIN,
+PLSPLS,
+MINMIN,
+MIN,
+PLS,
+DIV,
+MUL,
+
+/******** RETURNS BOOL ********/ 
+/*####### CAST OPS BOOL #######*/
+NOT,
+OR,
+AND,
+/*####### CAST OPS BOOL #######*/
+
+/*####### CAST OPS INT OR FLOAT #######*/
+LT,
+GT,
+GTEQ,
+LTEQ,
+EQEQ,
+NTEQ,
+/*####### CAST OPS INT OR FLOAT #######*/
+/******** BOOL ********/ 
+
+/******** ASSIGN ********/ 
+EQ,
+PLSEQ,
+MINEQ,
+DIVEQ,
+MULEQ
+/******** ASSIGN ********/ 
+
+ } operationTypeEnum;
 
 /* constants */
 typedef struct {
@@ -18,11 +56,17 @@ typedef struct {
 typedef struct {
 	char * var_name;	/* subscript to sym array */
 } idNodeType;
+
+/* boolean */
+typedef struct {
+	bool value;
+} boolNodeType;
 /* operators */
 typedef struct {
-	int oper;	/* operator */
+	int type;	/* operator */
 	int nops;	/* number of operands */
 	struct nodeTypeTag **op;	/* operands */
+	dataTypeEnum eval; /* this should have the evaluated type of the expression */
 } oprNodeType;
 typedef struct nodeTypeTag {
 	nodeEnum type;	/* type of node */
@@ -31,11 +75,11 @@ typedef struct nodeTypeTag {
 		conNodeType con;	/* constants */
 		charNodeType con_char;
 		floatNodeType flo;
+		boolNodeType boolean;
 		idNodeType id;		/* identifiers */
 		oprNodeType opr;	/* operators */
 	};
-	//TODO: Find out if we need to add another type (no val) for expressions which doesn't evaluate to anything
-	//dataTypeEnum eval; /* this should have the evaluated type of the expression */
+
 } nodeType;
 
 extern int sym[26];

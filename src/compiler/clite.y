@@ -15,9 +15,10 @@ SemanticAnalyzer* sem_analyzer = new SemanticAnalyzer;
 /* prototypes */
 nodeType *opr(int oper, int nops, ...);
 nodeType *id(char* var_name);
-nodeType *con(int value);
+nodeType *conInt(int value);
 nodeType *conChar(char* value);
-nodeType *flo(float value);
+nodeType *conFloat(float value);
+nodeType *conBool(bool value);
 void freeNode(nodeType *p);
 int ex(nodeType *p);
 int yylex(void);
@@ -41,22 +42,24 @@ bool boolean;
 char sIndex;	/* symbol table index */
 char* var_name;
 nodeType *nPtr;	/* node pointer */
+dataTypeEnum data_type;
 };
 
+%token <boolean> TRUEFALSE
 %token <iValue> INTEGER 
 %token <fValue> FLOAT
 %token <var_name> VARIABLE STRING
 %token DO WHILE FOR IF PRINT T_CONST SWITCH CASE DEFAULT
-%token PLSEQ MINEQ DIVEQ MULEQ	//+= -= /= *=
-%token <iValue> T_INT T_FLOAT T_STRING
+%token OPLSEQ OMINEQ ODIVEQ OMULEQ	//+= -= /= *=
+%token <iValue> T_INT T_FLOAT T_STRING T_BOOL
 %nonassoc IFX
 %nonassoc ELSE
-%left GE LE EQ NE '>' '<'
+%left OGE OLE OEQ ONE '>' '<'
 %left '+' '-'
 %left '*' '/'
-%nonassoc UMINUS
-%type <nPtr> stmt expr stmt_list exp1 exp2 switch_statement num_exp switch_block
-%type <iValue> type
+%nonassoc UMINUS OPLSPLS OMINMIN
+%type <nPtr> stmt expr stmt_list exp1 exp2 switch_statement num_exp switch_block con_expr
+%type <data_type> type
 %type <boolean> const 
 
 
@@ -87,7 +90,7 @@ stmt:
 	| switch_statement					{ $$ = $1; }
 	| PRINT expr ';'					{ $$ = opr(PRINT, 1, $2); }
 	| '{' stmt_list '}' 				{ $$ = $2; }
-	| 	error ';'					{ $$ = NULL; yyerrok; }
+	| 	error ';'						{ sem_analyzer->syntaxError = true;$$ = NULL; yyerrok; }
 	;
 
 
@@ -97,7 +100,7 @@ switch_statement:
 	;
 
 switch_block:
-	  CASE num_exp ':' stmt switch_block{ $$ = opr(CASE, 3, $2, $4, $5); }
+	  CASE con_expr ':' stmt switch_block{ $$ = opr(CASE, 3, $2, $4, $5); }
 	| DEFAULT	':' stmt				{ $$ = opr(DEFAULT,1, $3); }
 	| /* NULL */						{ $$ = opr(';',2, NULL, NULL); }
 	;
@@ -107,58 +110,65 @@ num_exp:								  /* if not numerical expression throw an error */
 	;
 
 exp1:
-		const type VARIABLE				{ $$ = opr('=', 2, id($3), con(0)); sem_analyzer->insertSymbol($3, $2, $1); }
-	|	const type VARIABLE '=' expr 	{ $$ = opr('=', 2, id($3), $5); sem_analyzer->insertSymbol($3, $2, $1);
-	                                    sem_analyzer->assignmentValidity($3, $5); /* Must be called after insert symbol*/
-	                                    }
+		const type VARIABLE				{ sem_analyzer->insertSymbol($3, $2, $1); $$ = opr(EQ, 2, id($3), conInt(0));  }
+	|	const type VARIABLE '=' expr 	{ sem_analyzer->insertSymbol($3, $2, $1); $$ = opr(EQ, 2, id($3), $5); 
+										}
 	|	exp2 							{ $$ = $1; }
 	;
 
 exp2:
 		VARIABLE '=' expr 				{
-                                            sem_analyzer->assignmentValidity($1, $3);
-                                            $$ = opr('=', 2, id($1), $3);
-                                        }
-    |	VARIABLE PLSEQ expr 			{ /*TODO: check for validity*/$$ = opr(PLSEQ, 2, id($1), $3);}
-    |	VARIABLE MINEQ expr 			{ /*TODO: check for validity*/$$ = opr(MINEQ, 2, id($1), $3);}
-    |	VARIABLE MULEQ expr 			{ /*TODO: check for validity*/$$ = opr(MULEQ, 2, id($1), $3);}
-    |	VARIABLE DIVEQ expr 			{ /*TODO: check for validity*/$$ = opr(DIVEQ, 2, id($1), $3);}
+											// sem_analyzer->assignmentValidity($1, $3);
+											$$ = opr(EQ, 2, id($1), $3);
+										}
+	|	VARIABLE OPLSEQ expr 			{ $$ = opr(PLSEQ, 2, id($1), $3);}
+	|	VARIABLE OMINEQ expr 			{ $$ = opr(MINEQ, 2, id($1), $3);}
+	|	VARIABLE OMULEQ expr 			{ $$ = opr(MULEQ, 2, id($1), $3);}
+	|	VARIABLE ODIVEQ expr 			{ $$ = opr(DIVEQ, 2, id($1), $3);}
 	|	expr 							{ $$ = $1; }
 	;
 
 const: 
-	T_CONST			{ $$ = 1; }
-	| /* NULL */	{ $$ = 0; }
+	T_CONST			{ $$ = true; }
+	| /* NULL */	{ $$ = false; }
 	;
 
 stmt_list:
 	stmt 					{ $$ = $1; }
 	| stmt_list stmt 		{ $$ = opr(';', 2, $1, $2); }
- 	;
+	;
 
 expr:
-	INTEGER 				{ $$ = con($1); }
-	| VARIABLE 				{ $$ = id($1); }
-	| STRING    			{ $$ = conChar($1); }
-	| FLOAT                 { $$ = flo($1); }
-	| '-' expr %prec UMINUS { $$ = opr(UMINUS, 1, $2); }
-	| expr '+' expr 		{ $$ = opr('+', 2, $1, $3); }
-	| expr '-' expr 		{ $$ = opr('-', 2, $1, $3); }
-	| expr '*' expr 		{ $$ = opr('*', 2, $1, $3); }
-	| expr '/' expr 		{ $$ = opr('/', 2, $1, $3); }
-	| expr '<' expr 		{ $$ = opr('<', 2, $1, $3); }
-	| expr '>' expr 		{ $$ = opr('>', 2, $1, $3); }
-	| expr GE expr 			{ $$ = opr(GE, 2, $1, $3); }
-	| expr LE expr 			{ $$ = opr(LE, 2, $1, $3); }
-	| expr NE expr 			{ $$ = opr(NE, 2, $1, $3); }
-	| expr EQ expr 			{ $$ = opr(EQ, 2, $1, $3); }
-	| '(' expr ')' 			{ $$ = $2; }
+	  con_expr 							{ $$ = $1; }
+	| VARIABLE 							{ $$ = id($1); }
+	| VARIABLE OPLSPLS 					{ $$ = opr(PLSPLS, 1, $1);}
+	| VARIABLE OMINMIN 					{ $$ = opr(MINMIN, 1, $1);}
+	| '-' expr %prec UMINUS 			{ $$ = opr(UMINUS, 1, $2); }
+	| expr '+' expr 					{ $$ = opr(PLS, 2, $1, $3); }
+	| expr '-' expr 					{ $$ = opr(MIN, 2, $1, $3); }
+	| expr '*' expr 					{ $$ = opr(MUL, 2, $1, $3); }
+	| expr '/' expr 					{ $$ = opr(DIV, 2, $1, $3); }
+	| expr '<' expr 					{ $$ = opr(LT, 2, $1, $3); }
+	| expr '>' expr 					{ $$ = opr(GT, 2, $1, $3); }
+	| expr OGE expr 					{ $$ = opr(GTEQ, 2, $1, $3); }
+	| expr OLE expr 					{ $$ = opr(LTEQ, 2, $1, $3); }
+	| expr ONE expr 					{ $$ = opr(NTEQ, 2, $1, $3); }
+	| expr OEQ expr 					{ $$ = opr(EQEQ, 2, $1, $3); }
+	| '(' expr ')' 						{ $$ = $2; }
+	;
+
+con_expr:
+	  INTEGER 							{ $$ = conInt($1); }
+	| STRING    						{ $$ = conChar($1); }
+	| FLOAT 							{ $$ = conFloat($1); }
+	| TRUEFALSE							{ $$ = conBool($1); }
 	;
 
 type:
-	T_INT             {$$ = 0;}
-	| T_FLOAT         {$$ = 1;}
-	| T_STRING        {$$ = 2;}
+	  T_INT				{$$ = t_int;}
+	| T_FLOAT			{$$ = t_float;}
+	| T_STRING			{$$ = t_string;}
+	| T_BOOL 			{$$ = t_bool;}
 	;
 
 %%
@@ -166,7 +176,7 @@ type:
 
 #define SIZEOF_NODETYPE ((char *)&p->con - (char *)p)
 
-nodeType *con(int value) {
+nodeType *conInt(int value) {
 	nodeType *p;
 	/* allocate node */
 	// if ((p = malloc(sizeof(nodeType))) == NULL)
@@ -193,7 +203,7 @@ nodeType *conChar(char* value) {
 	return p;
 }
 
-nodeType *flo(float value) {
+nodeType *conFloat(float value) {
 	nodeType *p;
 	/* allocate node */
 	p = new nodeType();
@@ -203,8 +213,17 @@ nodeType *flo(float value) {
 	p->flo.value = value;
 	return p;
 }
-
-nodeType *id(char* var_name) {
+nodeType *conBool(bool value) {
+	nodeType *p;
+	/* allocate node */
+	p = new nodeType();
+	if(!p) yyerror("out of memory");
+	/* copy information */
+	p->type = typeBool;
+	p->boolean.value = value;
+	return p;
+}
+nodeType *id(char* var_name ) {
 	nodeType *p;
 	/* allocate node */
 	// if ((p = malloc(sizeof(nodeType))) == NULL)
@@ -220,6 +239,8 @@ nodeType *id(char* var_name) {
 }
 
 nodeType *opr(int oper, int nops, ...) {
+	
+
 	va_list ap;
 	nodeType *p;
 	int i;
@@ -234,12 +255,18 @@ nodeType *opr(int oper, int nops, ...) {
 
 	/* copy information */
 	p->type = typeOpr;
-	p->opr.oper = oper;
+	p->opr.type = oper;
 	p->opr.nops = nops;
 	va_start(ap, nops); // iterate over operands to store them in the operand array
 	for (i = 0; i < nops; i++)
 		p->opr.op[i] = va_arg(ap, nodeType*);
 	va_end(ap);
+
+	if(oper <= MULEQ){
+		sem_analyzer->operationValidity(p->opr);
+	}
+
+
 	return p;
 }
 
@@ -268,7 +295,7 @@ int ex(nodeType *p) {
 		printf("\tpush\t%s\n", p->id.var_name);
 		break;
 	case typeOpr:
-		switch (p->opr.oper) {
+		switch (p->opr.type) {
 		case WHILE:
 			printf("L%03d:\n", lbl1 = lbl++);
 			ex(p->opr.op[0]);
@@ -306,7 +333,7 @@ int ex(nodeType *p) {
 			ex(p->opr.op[0]);
 			printf("\tprint\n");
 			break;
-		case '=':
+		case EQ:
 			ex(p->opr.op[1]);
 			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
 			break;
@@ -317,27 +344,33 @@ int ex(nodeType *p) {
 		default:
 			ex(p->opr.op[0]);
 			ex(p->opr.op[1]);
-			switch (p->opr.oper) {
-			case '+':
+			switch (p->opr.type) {
+			case PLS:
 				printf("\tadd\n"); break;
-			case '-':
+			case MIN:
 				printf("\tsub\n"); break;
-			case '*':
+			case MUL:
 				printf("\tmul\n"); break;
-			case '/':
+			case DIV:
 				printf("\tdiv\n"); break;
-			case '<':
+			case LT:
 				printf("\tcompLT\n"); break;
-			case '>':
+			case GT:
 				printf("\tcompGT\n"); break;
-			case GE:
+			case GTEQ:
 				printf("\tcompGE\n"); break;
-			case LE:
+			case LTEQ:
 				printf("\tcompLE\n"); break;
-			case NE:
+			case NTEQ:
 				printf("\tcompNE\n"); break;
-			case EQ:
+			case EQEQ:
 				printf("\tcompEQ\n"); break;
+			case PLSPLS:
+				printf("\tplus plus\n"); break;
+			case MINMIN:
+				printf("\tminus minus\n"); break;
+			default:
+				printf("unrecognized operation please check the enum and stuff");	
 			}
 		}
 	}

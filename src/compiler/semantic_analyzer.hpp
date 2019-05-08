@@ -27,6 +27,8 @@ public:
 
 class SemanticAnalyzer{
 public:
+    bool syntaxError = false; //This is set to true whenever a syntax error is found.
+
     vector<map<string, symbol*> > symbol_table;
 
 
@@ -39,59 +41,89 @@ public:
     }
 
 
-    void assignmentValidity(string left, nodeType* right){
-        // Check if left node exist in this scope.
-        bool valid = this->checkValidUsage(left);
-        if(!valid){
-            string error = "Undefined variable " + left;
-            yyerror(error);
+    void operationValidity(oprNodeType & opr){
+
+        cout<<"start"<<endl;
+        dataTypeEnum op_types[2]; //type of each operand that we're trying to evaluate
+        nodeType * ops[2]; //contains the left and right operands ( actual operands not just the type)
+        
+        ops[0] = opr.op[0];
+        if(opr.nops ==1){
+            ops[1] = opr.op[0];     
+        }else if(opr.nops == 2){
+            ops[1] = opr.op[1];
         }else{
-
-            // Valid usage.
-            // Check valid assignment.
-            // Get last assigned type.
-            int left_type = 0;
-            bool left_is_constant = false;
-            this->getLastType(left, left_type, left_is_constant);
-
-            printf("type of left is:%s %s  \n", getTypeNameConstant(left_is_constant).c_str(),
-                   getTypeNameFromCode(left_type).c_str());
-
-            if(right->type == typeId) {
-                string right_var_name = right->id.var_name;
-                bool valid = this->checkValidUsage(right_var_name);
-                if(!valid) {
-                    string error = "Undefined variable " + right_var_name;
-                    yyerror(error);
+            cout<<"unexpected number of operands when trying to check for operation validity"<<endl;
+            cout<<"are you missing an operation check like check if this is not a while loop or something?"<<endl;
+        }
+        
+        //iterate over two operands and get type of each operand
+        for(int i = 0;i<2; i ++){
+            if(ops[i]->type == typeOpr){
+                cout<<"type operation"<<endl;
+                op_types[i] = ops[i]->opr.eval;
+            }else if(ops[i]->type == typeId){
+                cout<<"type variable"<<endl;
+                bool is_const = false;
+                string var_name(ops[i]->id.var_name);
+                int type = 0;
+                this->getLastType(string(var_name), type, is_const);
+                op_types[i] = (dataTypeEnum)type;
+                // TODO: watch out from having to deem this variable used before declaration if this is an assigment operation!
+                // Check if left node exist in this scope.
+                if(this->checkValidUsage(var_name) == false){
+                    //TODO: check if we can typecast
+                    //TODO: check if we should break or continue parsing
+                    return ;
                 }
-
-                int right_type = 0;
-                bool right_is_constant = false;
-                this->getLastType(right_var_name, right_type, right_is_constant);
-
-                if(left_type == t_int && right_type != t_int     ||
-                   left_type == t_float && right_type != t_float ||
-                   left_type == t_string && right_type != t_string) {
-                
-                    string error = "Type mismatch! Expected " + getTypeNameFromCode(left_type) + " type" 
-                + " got " + getTypeNameFromCode(right_type) + " instead";
-                    yyerror(error);
+                if(i == 0){
+                    //if it's constant then we cannot assign anything to it
+                    //if this variable is on the left then we're declaring it
+                    //TODO: we can assign if it's the declaration
+                    //TODO: we need to allow constant to be assigned a value in the line it's declared only!
+                    //      leaving this as it is will cause us to always say that you cannot assign a value
+                    //      to a constant variable
+                    //      this will give an error if left like this!
+                    if(is_const){
+                        if(opr.type >=EQ && opr.type <= MULEQ){
+                            cout<<"Assigning value to a constant variable!"<<endl;
+                            return ;
+                        }
+                    }
                 }
-
-            } else {
-                //TODO: this is wrong in case of type operation
-                if(left_type == t_int && right->type != typeCon     ||
-                   left_type == t_float && right->type != typeFloat ||
-                   left_type == t_string && right->type != typeChar) {
-                    string error = "Type mismatch! Expected " + getTypeNameFromCode(left_type) + " type"
-                + " got " + to_string(right->type) + " instead";
-                    yyerror(error);
-                }
+                op_types[i] = (dataTypeEnum)type;
+                printf("type of %s is:%s %s  \n", i?"right":"left" , getTypeNameConstant(is_const).c_str(),
+            getTypeNameFromCode(op_types[i]).c_str());
+            }else if(ops[i]->type == typeCon){
+                cout<<"type constant"<<endl;
+                op_types[i] = t_int;
+            }else if(ops[i]->type == typeChar){
+                cout<<"type string"<<endl;
+                op_types[i] = t_string;
+            }else if(ops[i]->type == typeFloat){
+                cout<<"type float"<<endl;
+                op_types[i] = t_float;
             }
+        }
+
+        //find the resulting type depending on the operation
+        //TODO: type casting will be done here
+
+        //operation returns bool expression
+        if(opr.type >= NOT && opr.type <= NTEQ){
+            if( (op_types[0]==t_int || op_types[0]==t_float || op_types[0]==t_bool)  
+                &&
+                (op_types[1]==t_int || op_types[1]==t_float || op_types[1]==t_bool) ){
+                cout<<"resulting expression is bool"<<endl;
+                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]);
+                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]);
+            }
+            opr.eval = t_bool;
+            cout<<"returning bool"<<endl;
         }
     }
 
-    void getLastType(string& name, int& type, bool& is_constant){
+    void getLastType(string name, int& type, bool& is_constant){
 
         for (int i = this->symbol_table.size() - 1; i >=0; i--){
             // If the symbol was found.
@@ -103,6 +135,35 @@ public:
 
         }
     }
+
+    // dataTypeEnum resolveTypes(nodeType* opr, nodeType* op1, nodeType* op2){
+    //     dataTypeEnum op_types[2];
+    //     nodeType * ops[2];
+    //     ops[0] = op1;
+    //     ops[1] = op2; 
+    //     for(int i = 0;i<2; i ++){
+    //         //get operands types:
+    //         if(ops[i]->type == typeOpr){
+    //             op_types[i] = ops[i]->opr->eval;
+    //         }else if(ops[i]->type == typeId){
+    //             op_types[i] = this->getLastType(ops[i]->id.var_name);
+    //         }else if(ops[i]->type == typeCon){
+    //             op_types[i] = t_int;
+    //         }else if(ops[i]->type == typeChar){
+    //             op_types[i] = t_string;
+    //         }else if(ops[i]->type == typeFloat){
+    //             op_types[i] = t_float;
+    //         }
+    //     }
+
+    //     switch(opr->type){
+    //         case 
+    //     }
+
+
+
+    //     //set opr->eval = ..
+    // }
     void insertSymbol(string symbol_name, int symbol_type, bool constant){
 
         // Check if exists before.
@@ -138,13 +199,16 @@ public:
                 }
             }
         }
+            string error = "Undefined variable " + symbol_name;
+            yyerror(error);
             return false;
     }
 
     bool checkValidDeclaration(string symbol_name){
 
-        if(symbol_table.size() != 0 && (symbol_table[symbol_table.size() - 1]).count(symbol_name))
+        if(symbol_table.size() != 0 && (symbol_table[symbol_table.size() - 1]).count(symbol_name)){
             return false;
+        }
 
             return true;
     }
@@ -181,6 +245,8 @@ public:
                         break;
                         case t_string:
                         data_type = "string";
+                        case t_bool:
+                        data_type = "bool";
                         break;
                     }
                 printf("{ Type: %s %s | Name: %s }\n",is_const.c_str(), data_type.c_str(), mp_it->first.c_str());
