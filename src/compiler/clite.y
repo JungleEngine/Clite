@@ -144,6 +144,7 @@ expr:
 	| VARIABLE OPLSPLS 					{ $$ = opr(PLSPLS, 1, $1);}
 	| VARIABLE OMINMIN 					{ $$ = opr(MINMIN, 1, $1);}
 	| '-' expr %prec UMINUS 			{ $$ = opr(UMINUS, 1, $2); }
+	| '!' expr %prec ONOT 				{ $$ = opr(NOT, 1, $2); }
 	| expr '+' expr 					{ $$ = opr(PLS, 2, $1, $3); }
 	| expr '-' expr 					{ $$ = opr(MIN, 2, $1, $3); }
 	| expr '*' expr 					{ $$ = opr(MUL, 2, $1, $3); }
@@ -339,10 +340,36 @@ int ex(nodeType *p) {
 			ex(p->opr.op[1]);
 			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
 			break;
+		case PLSEQ:
+			ex(p->opr.op[1]);
+			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
+			break;
+		case MINEQ:
+			ex(p->opr.op[1]);
+			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
+			break;
+		case DIVEQ:
+			ex(p->opr.op[1]);
+			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
+			break;
+		case MULEQ:
+			ex(p->opr.op[1]);
+			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
+			break;
 		case UMINUS:
 			ex(p->opr.op[0]);
 			printf("\tneg\n");
 			break;
+		case PLSPLS:
+			printf("\tplus plus\n"); break;
+		case MINMIN:
+			printf("\tminus minus\n"); break;
+		case NOT:
+			printf("\tnot\n"); break;
+		case OR:
+			printf("\tor\n"); break;
+		case AND:
+			printf("\tand\n"); break;
 		default:
 			ex(p->opr.op[0]);
 			ex(p->opr.op[1]);
@@ -367,16 +394,6 @@ int ex(nodeType *p) {
 				printf("\tcompNE\n"); break;
 			case EQEQ:
 				printf("\tcompEQ\n"); break;
-			case PLSPLS:
-				printf("\tplus plus\n"); break;
-			case MINMIN:
-				printf("\tminus minus\n"); break;
-			case NOT:
-				printf("\tnot\n"); break;
-			case OR:
-				printf("\tor\n"); break;
-			case AND:
-				printf("\tand\n"); break;
 			default:
 				printf("unrecognized operation please check the enum and stuff");	
 			}
