@@ -144,6 +144,7 @@ expr:
 	| VARIABLE OPLSPLS 					{ $$ = opr(PLSPLS, 1, $1);}
 	| VARIABLE OMINMIN 					{ $$ = opr(MINMIN, 1, $1);}
 	| '-' expr %prec UMINUS 			{ $$ = opr(UMINUS, 1, $2); }
+	| '!' expr %prec UMINUS 			{ $$ = opr(UMINUS, 1, $2); }
 	| expr '+' expr 					{ $$ = opr(PLS, 2, $1, $3); }
 	| expr '-' expr 					{ $$ = opr(MIN, 2, $1, $3); }
 	| expr '*' expr 					{ $$ = opr(MUL, 2, $1, $3); }
@@ -379,7 +380,7 @@ int ex(nodeType *p) {
 
 void yyerror(string s) {
     extern int yylineno;
-	fprintf(stdout, "%s at line:%d\n", s.c_str(), yylineno);
+	fprintf(stdout, "error: %s at line:%d\n", s.c_str(), yylineno);
 }
 
 

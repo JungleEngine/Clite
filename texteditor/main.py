@@ -6,6 +6,8 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.uic.properties import QtGui
 from codeeditor import *
+import subprocess
+import os
 var = 0
 f = ""
 choiceStr = ""
@@ -16,8 +18,10 @@ tt = True
 tf = True
 ts = True
 
+curr_dir_path = os.path.dirname(os.path.realpath(__file__))  # Get current directory
+executable_compiler_path = curr_dir_path + "/../src/compiler/clite"
 save_same_file_opened = False
-opened_file_path = ""
+opened_file_path = None
 
 wind_x, wind_y = (1000, 800)
 
@@ -33,7 +37,6 @@ class Find(QDialog):
         self.lb1 = QLabel("Search for: ", self)
         self.lb1.setStyleSheet("font-size: 15px; ")
         self.lb1.move(10, 10)
-
 
         self.te = QTextEdit(self)
         self.te.move(10, 40)
@@ -186,11 +189,15 @@ class Main(QMainWindow):
         redoAction.setShortcut("Ctrl+Y")
         redoAction.triggered.connect(self.Redo)
 
-
-
         dedentAction = QAction(QIcon("icons/dedent.png"), "Dedent Area", self)
         dedentAction.setShortcut("Shift+Tab")
+        dedentAction.setStatusTip("dendent the selected row")
         dedentAction.triggered.connect(self.Dedent)
+
+        compileAction = QAction(QIcon("icons/compile.png"), "Compile", self)
+        compileAction.setShortcut("Ctrl+F5")
+        compileAction.setStatusTip("Compile")
+        compileAction.triggered.connect(self.Compile)
 
         self.toolbar = self.addToolBar("Options")
         self.toolbar.addAction(newAction)
@@ -204,17 +211,17 @@ class Main(QMainWindow):
         self.toolbar.addAction(pasteAction)
         self.toolbar.addAction(undoAction)
         self.toolbar.addAction(redoAction)
-        self.toolbar.addSeparator()
         self.toolbar.addAction(dedentAction)
-
-
+        self.toolbar.addSeparator()
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(compileAction)
 
         # ------- Text Edit -----------------------------------
 
         self.text = CodeEditor(self)
         self.text.setStyleSheet("background-color:  #2B2B2B; color:#BBBBBB;foreground-color:#A9B7C6;"
                                 "font: 75 15pt Consolas;color: rgb(255, 255, 255);"
-                                           "font-weight:bold;")
+                                "font-weight:bold;")
         self.text.move(0, 100)
 
         self.text.resize(wind_x, int(wind_y * 1 / 2))
@@ -223,15 +230,12 @@ class Main(QMainWindow):
         # ------- Compiler Output -----------------------------------
 
         self.compiler_output = QTextEdit(self)
-        self.compiler_output.move(0,self.text.frameGeometry().height() + 100)
-        self.compiler_output.resize(wind_x, int(wind_y / 2)- 120)
+        self.compiler_output.move(0, self.text.frameGeometry().height() + 100)
+        self.compiler_output.resize(wind_x, int(wind_y / 2) - 120)
         self.compiler_output.setFont(QFont("DejaVu Sans Mono", 12))
-        self.compiler_output.setFontPointSize(20)
-        self.compiler_output.append("Compiler Output:")
         self.compiler_output.setFontPointSize(12)
-        self.compiler_output.setStyleSheet("background-color:  #333131; color:White;"
+        self.compiler_output.setStyleSheet("background-color:  #333131; color:white;"
                                            "")
-        self.compiler_output.append("Compiler Output:")
         self.compiler_output.setReadOnly(True)
 
         # ------- Statusbar ------------------------------------
@@ -323,7 +327,8 @@ class Main(QMainWindow):
         print("file name: ", filename)
         f = open(filename, 'r')
         filedata = f.read()
-        self.text.setText(filedata)
+        self.text.clear()
+        self.text.appendPlainText(filedata)
         f.close()
 
     def Save(self):
@@ -334,8 +339,9 @@ class Main(QMainWindow):
         else:
             filename = QFileDialog.getSaveFileName(self, 'Save File')[0]
             f = open(filename, 'w')
+            opened_file_path = filename
+
         save_same_file_opened = True
-        opened_file_path = filename
         filedata = self.text.toPlainText()
         f.write(filedata)
         f.close()
@@ -400,20 +406,10 @@ class Main(QMainWindow):
         self.text.paste()
 
     def CursorPosition(self):
-        line = self.text.textCursor().blockNumber()
+        line = self.text.textCursor().blockNumber() + 1
         col = self.text.textCursor().columnNumber()
         linecol = ("Line: " + str(line) + " | " + "Column: " + str(col))
         self.status.showMessage(linecol)
-
-    def FontColor(self):
-        c = QColorDialog.getColor()
-
-        self.text.setTextColor(c)
-
-    def FontBackColor(self):
-        c = QColorDialog.getColor()
-
-        self.text.setTextBackgroundColor(c)
 
     def Dedent(self):
         tab = "\t"
@@ -445,13 +441,40 @@ class Main(QMainWindow):
             if var == 2:
                 break'''
 
-    def BulletList(self):
-        print("bullet connects!")
-        self.text.insertHtml("<ul><li> ...</li></ul>")
+    def Compile(self):
+        self.compiler_output.clear()
+        """
+        Compile code
+        """
+        if opened_file_path == None:
+            self.compiler_output.setFontPointSize(20)
+            self.compiler_output.append("Save current file as it has not been written to disk yet")
+            self.compiler_output.setStyleSheet("background-color:  #333131; color:red;"
+                                               "")
+            return
 
-    def NumberedList(self):
-        print("numbered connects!")
-        self.text.insertHtml("<ol><li> ...</li></ol>")
+        compiler_input_file = opened_file_path
+        compiler_output_file = QFileDialog.getSaveFileName(self, 'Save File')[0]
+
+        subprocess.call([executable_compiler_path + "<" + compiler_input_file + ">" + compiler_output_file],
+                        shell=True)
+
+        f = open(compiler_output_file, 'r')
+        filedata = f.read()
+
+
+        self.compiler_output.setStyleSheet("background-color:  #333131; color:green;"
+                                           "")
+        # Bad thing to do: if line: exist then it is an error.
+        if filedata.find("error") != -1:
+            self.compiler_output.setStyleSheet("background-color:  #333131; color:red;"
+                                               "")
+        self.compiler_output.setFontPointSize(20)
+        self.compiler_output.append("Compiler Output:")
+        self.compiler_output.setFontPointSize(14)
+
+        self.compiler_output.append(filedata)
+        f.close()
 
 
 def main():
