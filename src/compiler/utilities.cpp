@@ -23,7 +23,7 @@ string getTypeNameFromCode(int type_code){
 		case t_bool:
 			return "boolean";
 	}
-	return "unkown";
+	return "unknown";
 }
 
 string getTypeNameConstant(bool is_constant){

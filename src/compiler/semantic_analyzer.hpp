@@ -103,6 +103,9 @@ public:
             }else if(ops[i]->type == typeFloat){
                 cout<<"type float"<<endl;
                 op_types[i] = t_float;
+            }else if(ops[i]->type == typeBool){
+                cout<<"type bool"<<endl;
+                op_types[i] = t_bool;
             }
         }
 
@@ -111,15 +114,78 @@ public:
 
         //operation returns bool expression
         if(opr.type >= NOT && opr.type <= NTEQ){
-            if( (op_types[0]==t_int || op_types[0]==t_float || op_types[0]==t_bool)  
+            if (opr.type <= AND) {
+                if (op_types[0]==t_string && opr.type != NOT) {
+                    cout << "Error: Type of left operand is string!" << endl;
+                    return;
+                }
+                if (op_types[1]==t_string) {
+                    cout << "Error: Type of right operand is string!" << endl;
+                    return;
+                }
+                if (op_types[0]==t_int || op_types[0]==t_float) {
+                    cout << "Type of left operand is: " << getTypeNameFromCode(op_types[0]);
+                    cout << ", casting to bool" << endl;
+                }
+                if (op_types[1]==t_int || op_types[1]==t_float) {
+                    cout << "Type of right operand is: " << getTypeNameFromCode(op_types[1]);
+                    cout << ", casting to bool" << endl;
+                }
+            }
+            else if( (op_types[0]==t_int || op_types[0]==t_float || op_types[0]==t_bool)  
                 &&
                 (op_types[1]==t_int || op_types[1]==t_float || op_types[1]==t_bool) ){
-                cout<<"resulting expression is bool"<<endl;
-                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]);
-                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]);
+                cout << "type of left operand is: " << getTypeNameFromCode(op_types[0]) << endl;
+                cout << "type of right operand is: " << getTypeNameFromCode(op_types[1]) << endl;
+                cout << "resulting expression is bool" << endl;
             }
             opr.eval = t_bool;
             cout<<"returning bool"<<endl;
+        }
+
+        //operation returns numerical expression
+        if(opr.type >= UMIN && opr.type <= MUL) {
+            if( (op_types[0] != t_float && op_types[0] != t_int)
+                ||
+                (op_types[1] != t_float && op_types[1] != t_int)) {
+                cout << "Error: Non numerical operand!" << endl;
+                return;
+            }
+            else if( op_types[0] == t_float || op_types[1] == t_float) {
+                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]) << endl;
+                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]) << endl;
+                cout<<"resulting expression is float"<<endl;
+                opr.eval = t_float;
+            }
+            else {
+                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0])<< endl;
+                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1])<< endl;
+                cout<<"resulting expression is int"<<endl;
+                opr.eval = t_int;
+            }
+        }
+
+        if(opr.type >= EQ && opr.type <= MULEQ) {
+            if (op_types[0] == t_string || op_types[1] == t_string) {
+                cout << "Error: Non numerical operand!" << endl;
+                return;
+            }
+            if (op_types[0] == t_bool && op_types[1] != t_bool) {
+                cout << "Error in right operand! Expected boolean operand." << endl;
+                return;
+            }
+            if(op_types[0] == t_float || op_types[1] == t_float) {
+                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]) << endl;
+                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]) << endl;
+                cout<<"resulting expression is float"<<endl;
+                opr.eval = t_float;
+            }
+            else {
+                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]) << endl;
+                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]) << endl;
+                cout<<"resulting expression is int"<<endl;
+                opr.eval = t_int;
+            }
         }
     }
 

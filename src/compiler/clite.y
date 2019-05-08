@@ -54,10 +54,10 @@ dataTypeEnum data_type;
 %token <iValue> T_INT T_FLOAT T_STRING T_BOOL
 %nonassoc IFX
 %nonassoc ELSE
-%left OGE OLE OEQ ONE '>' '<'
+%left OGE OLE OEQ ONE '>' '<' OOR OAND
 %left '+' '-'
 %left '*' '/'
-%nonassoc UMINUS OPLSPLS OMINMIN
+%nonassoc UMINUS OPLSPLS OMINMIN ONOT
 %type <nPtr> stmt expr stmt_list exp1 exp2 switch_statement num_exp switch_block con_expr
 %type <data_type> type
 %type <boolean> const 
@@ -144,7 +144,8 @@ expr:
 	| VARIABLE OPLSPLS 					{ $$ = opr(PLSPLS, 1, $1);}
 	| VARIABLE OMINMIN 					{ $$ = opr(MINMIN, 1, $1);}
 	| '-' expr %prec UMINUS 			{ $$ = opr(UMINUS, 1, $2); }
-	| '!' expr %prec UMINUS 			{ $$ = opr(UMINUS, 1, $2); }
+
+	| '!' expr %prec ONOT 				{ $$ = opr(NOT, 1, $2); }
 	| expr '+' expr 					{ $$ = opr(PLS, 2, $1, $3); }
 	| expr '-' expr 					{ $$ = opr(MIN, 2, $1, $3); }
 	| expr '*' expr 					{ $$ = opr(MUL, 2, $1, $3); }
@@ -155,6 +156,8 @@ expr:
 	| expr OLE expr 					{ $$ = opr(LTEQ, 2, $1, $3); }
 	| expr ONE expr 					{ $$ = opr(NTEQ, 2, $1, $3); }
 	| expr OEQ expr 					{ $$ = opr(EQEQ, 2, $1, $3); }
+	| expr OOR expr 					{ $$ = opr(OR, 2, $1, $3); }
+	| expr OAND expr 					{ $$ = opr(AND, 2, $1, $3); }
 	| '(' expr ')' 						{ $$ = $2; }
 	;
 
@@ -338,10 +341,36 @@ int ex(nodeType *p) {
 			ex(p->opr.op[1]);
 			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
 			break;
+		case PLSEQ:
+			ex(p->opr.op[1]);
+			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
+			break;
+		case MINEQ:
+			ex(p->opr.op[1]);
+			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
+			break;
+		case DIVEQ:
+			ex(p->opr.op[1]);
+			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
+			break;
+		case MULEQ:
+			ex(p->opr.op[1]);
+			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
+			break;
 		case UMINUS:
 			ex(p->opr.op[0]);
 			printf("\tneg\n");
 			break;
+		case PLSPLS:
+			printf("\tplus plus\n"); break;
+		case MINMIN:
+			printf("\tminus minus\n"); break;
+		case NOT:
+			printf("\tnot\n"); break;
+		case OR:
+			printf("\tor\n"); break;
+		case AND:
+			printf("\tand\n"); break;
 		default:
 			ex(p->opr.op[0]);
 			ex(p->opr.op[1]);
@@ -366,10 +395,6 @@ int ex(nodeType *p) {
 				printf("\tcompNE\n"); break;
 			case EQEQ:
 				printf("\tcompEQ\n"); break;
-			case PLSPLS:
-				printf("\tplus plus\n"); break;
-			case MINMIN:
-				printf("\tminus minus\n"); break;
 			default:
 				printf("unrecognized operation please check the enum and stuff");	
 			}
