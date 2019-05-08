@@ -54,10 +54,10 @@ dataTypeEnum data_type;
 %token <iValue> T_INT T_FLOAT T_STRING T_BOOL
 %nonassoc IFX
 %nonassoc ELSE
-%left OGE OLE OEQ ONE '>' '<'
+%left OGE OLE OEQ ONE '>' '<' OOR OAND
 %left '+' '-'
 %left '*' '/'
-%nonassoc UMINUS OPLSPLS OMINMIN
+%nonassoc UMINUS OPLSPLS OMINMIN ONOT
 %type <nPtr> stmt expr stmt_list exp1 exp2 switch_statement num_exp switch_block con_expr
 %type <data_type> type
 %type <boolean> const 
@@ -154,6 +154,8 @@ expr:
 	| expr OLE expr 					{ $$ = opr(LTEQ, 2, $1, $3); }
 	| expr ONE expr 					{ $$ = opr(NTEQ, 2, $1, $3); }
 	| expr OEQ expr 					{ $$ = opr(EQEQ, 2, $1, $3); }
+	| expr OOR expr 					{ $$ = opr(OR, 2, $1, $3); }
+	| expr OAND expr 					{ $$ = opr(AND, 2, $1, $3); }
 	| '(' expr ')' 						{ $$ = $2; }
 	;
 
@@ -369,6 +371,12 @@ int ex(nodeType *p) {
 				printf("\tplus plus\n"); break;
 			case MINMIN:
 				printf("\tminus minus\n"); break;
+			case NOT:
+				printf("\tnot\n"); break;
+			case OR:
+				printf("\tor\n"); break;
+			case AND:
+				printf("\tand\n"); break;
 			default:
 				printf("unrecognized operation please check the enum and stuff");	
 			}

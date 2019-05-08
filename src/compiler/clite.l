@@ -100,11 +100,14 @@ endMC	"*/"
 							return *yytext;
 							}
 
-">="						return	OGE;
-"<="						return	OLE;
-"=="						return	OEQ;
-"!="						return	ONE;
+">="						return OGE;
+"<="						return OLE;
+"=="						return OEQ;
+"!="						return ONE;
 
+"||"						return OOR;
+"&&"						return OAND;
+"!" 						return ONOT;
 
 "+="						return OPLSEQ;
 "++"						return OPLSPLS;
