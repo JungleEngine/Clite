@@ -34,6 +34,8 @@ typedef struct nodeTypeTag {
 		idNodeType id;		/* identifiers */
 		oprNodeType opr;	/* operators */
 	};
+	//TODO: Find out if we need to add another type (no val) for expressions which doesn't evaluate to anything
+	//dataTypeEnum eval; /* this should have the evaluated type of the expression */
 } nodeType;
 
 extern int sym[26];

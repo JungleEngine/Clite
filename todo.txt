@@ -1,9 +1,10 @@
 #) data types (int#, float#, string# )
 #) constant variables 
+2) evaluating expressions
 3) logical expressions
 4) design quadrubles
-5) do while#, for loop#, switch
-6) block structure {int x; {int y; }}
+5) do while#, for loop#, switch#
+6) block structure {int x; {int y; }}#
 
 7) symbol table
 
@@ -27,3 +28,4 @@
 
 11) [optional] functions
 12) [optional] array
+13) [optional] comments
