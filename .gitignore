@@ -43,3 +43,7 @@ clite.dSYM
 cmake-build-debug/
 *.idea
 *.idea/
+
+.fuse*
+__pycache/*
+*.txt
