@@ -27,7 +27,7 @@ public:
     bool syntaxError = false; //This is set to true whenever a syntax error is found.
 
     vector<map<string, symbol*> > symbol_table;
-    string symbol_table_to_print = "";
+    string symbol_table_to_print = "<symtable> ";
 
     void addScope(){
         this->symbol_table_to_print += " Adding new scope \n";
@@ -290,7 +290,6 @@ public:
 
     // Printing the table.
     void printSymbolTable(){
-        this->symbol_table_to_print += "----------------------SYMBOL TABLE----------------------\n";
 
         int scope = 0;
 
@@ -323,16 +322,12 @@ public:
                         break;
                     }
                 this->symbol_table_to_print +=
-                    "{ Type: " + is_const +" " + data_type + " | Name:" + mp_it->first + "}\n";
+                    "{Type: " + is_const +" " + data_type + " | Name:" + mp_it->first + "}\n";
 
             }
-            this->symbol_table_to_print +="--------------------------------------------------------\n";
 
         }
-        this->symbol_table_to_print += "----------------------SYMBOL TABLE----------------------\n";
-        this->symbol_table_to_print +="----------------------END SYMBOL TABLE-------------------\n";
 
-        cout<<this->symbol_table_to_print;
     }
 
 };
