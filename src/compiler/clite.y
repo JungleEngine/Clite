@@ -43,7 +43,7 @@ char sIndex;	/* symbol table index */
 char* var_name;
 nodeType *nPtr;	/* node pointer */
 dataTypeEnum data_type;
-};
+}
 
 %token <boolean> TRUEFALSE
 %token <iValue> INTEGER 
@@ -292,8 +292,17 @@ int ex(nodeType *p) {
 	int lbl1, lbl2;
 	if (!p) return 0;
 	switch (p->type) {
-	case typeCon:
+	case typeCon :
 		printf("\tpush\t%d\n", p->con.value);
+		break;
+	case typeFloat :
+		printf("\tpush\t%f\n", p->flo.value);
+		break;
+	case typeChar :
+		printf("\tpush\t%s\n", p->con_char.value);
+		break;
+	case typeBool :
+		printf("\tpush\t%s\n", (p->con_char.value)?"true":"false");
 		break;
 	case typeId:
 		printf("\tpush\t%s\n", p->id.var_name);
@@ -367,10 +376,6 @@ int ex(nodeType *p) {
 			printf("\tminus minus\n"); break;
 		case NOT:
 			printf("\tnot\n"); break;
-		case OR:
-			printf("\tor\n"); break;
-		case AND:
-			printf("\tand\n"); break;
 		default:
 			ex(p->opr.op[0]);
 			ex(p->opr.op[1]);
@@ -395,6 +400,11 @@ int ex(nodeType *p) {
 				printf("\tcompNE\n"); break;
 			case EQEQ:
 				printf("\tcompEQ\n"); break;
+			case OR:
+				printf("\tor\n"); break;
+
+			case AND:
+				printf("\tand\n"); break;
 			default:
 				printf("unrecognized operation please check the enum and stuff");	
 			}
