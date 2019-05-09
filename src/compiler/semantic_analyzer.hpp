@@ -10,10 +10,6 @@ using namespace std;
 
 void yyerror(string s);
 
-bool mp_test(int i){
-	cout<<"map map"<<endl;
-	return true;
-}
 
 class symbol
 {
@@ -42,8 +38,6 @@ public:
 
 
     void operationValidity(oprNodeType & opr){
-
-        cout<<"start"<<endl;
         dataTypeEnum op_types[2]; //type of each operand that we're trying to evaluate
         nodeType * ops[2]; //contains the left and right operands ( actual operands not just the type)
         
@@ -60,10 +54,8 @@ public:
         //iterate over two operands and get type of each operand
         for(int i = 0;i<2; i ++){
             if(ops[i]->type == typeOpr){
-                cout<<"type operation"<<endl;
                 op_types[i] = ops[i]->opr.eval;
             }else if(ops[i]->type == typeId){
-                cout<<"type variable"<<endl;
                 bool is_const = false;
                 string var_name(ops[i]->id.var_name);
                 int type = 0;
@@ -92,25 +84,22 @@ public:
                     // }
                     if(is_const && opr.type != EQDEC ){
                         if(opr.type >=EQ && opr.type <= MULEQ){
-                            cout<<"Assigning value to a constant variable!"<<endl;
+                            this->syntaxError = true;
+                            yyerror("Assigning value to a constant variable!");
                             return ;
                         }
                     }
                 }
                 op_types[i] = (dataTypeEnum)type;
-                printf("type of %s is:%s %s  \n", i?"right":"left" , getTypeNameConstant(is_const).c_str(),
-            getTypeNameFromCode(op_types[i]).c_str());
+//                printf("type of %s is:%s %s  \n", i?"right":"left" , getTypeNameConstant(is_const).c_str(),
+//            getTypeNameFromCode(op_types[i]).c_str();
             }else if(ops[i]->type == typeCon){
-                cout<<"type constant"<<endl;
                 op_types[i] = t_int;
             }else if(ops[i]->type == typeChar){
-                cout<<"type string"<<endl;
                 op_types[i] = t_string;
             }else if(ops[i]->type == typeFloat){
-                cout<<"type float"<<endl;
                 op_types[i] = t_float;
             }else if(ops[i]->type == typeBool){
-                cout<<"type bool"<<endl;
                 op_types[i] = t_bool;
             }
         }
@@ -122,16 +111,17 @@ public:
         if(opr.type >= NOT && opr.type <= NTEQ){
             if (opr.type <= AND) {
                 if (op_types[0]==t_string && opr.type != NOT) {
-                    cout << "Error: Type of left operand is string!" << endl;
+                    this->syntaxError = true;
+                    yyerror( "Type of left operand is string!");
                     return;
                 }
                 if (op_types[1]==t_string) {
-                    cout << "Error: Type of right operand is string!" << endl;
+                    this->syntaxError = true;
+                    yyerror("Type of right operand is string!");
                     return;
                 }
                 if (op_types[0]==t_int || op_types[0]==t_float) {
-                    cout << "Type of left operand is: " << getTypeNameFromCode(op_types[0]);
-                    cout << ", casting to bool" << endl;
+
                 }
                 if (op_types[1]==t_int || op_types[1]==t_float) {
                     cout << "Type of right operand is: " << getTypeNameFromCode(op_types[1]);
@@ -141,12 +131,9 @@ public:
             else if( (op_types[0]==t_int || op_types[0]==t_float || op_types[0]==t_bool)  
                 &&
                 (op_types[1]==t_int || op_types[1]==t_float || op_types[1]==t_bool) ){
-                cout << "type of left operand is: " << getTypeNameFromCode(op_types[0]) << endl;
-                cout << "type of right operand is: " << getTypeNameFromCode(op_types[1]) << endl;
-                cout << "resulting expression is bool" << endl;
+
             }
             opr.eval = t_bool;
-            cout<<"returning bool"<<endl;
         }
 
         //operation returns numerical expression
@@ -154,28 +141,20 @@ public:
             if( (op_types[0] != t_float && op_types[0] != t_int)
                 ||
                 (op_types[1] != t_float && op_types[1] != t_int)) {
-                cout << "Error: Non numerical operand!" << endl;
+                this->syntaxError = true;
+                yyerror("Error: Non numerical operand!");
                 return;
             }
             else if( op_types[0] == t_float || op_types[1] == t_float) {
-                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]) << endl;
-                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]) << endl;
-                cout<<"resulting expression is float"<<endl;
                 opr.eval = t_float;
             }
             else {
-                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0])<< endl;
-                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1])<< endl;
-                cout<<"resulting expression is int"<<endl;
                 opr.eval = t_int;
             }
         }
 
         if(opr.type == EQ || opr.type == EQDEC){
             if(op_types[0] == op_types[1]){
-                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]) << endl;
-                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]) << endl;
-                cout<<"resulting expression is: "<<getTypeNameFromCode(op_types[0])<<endl;
                 opr.eval = op_types[0];
                 return;
             }
@@ -191,27 +170,23 @@ public:
         if(opr.type >= EQ && opr.type <= MULEQ) {
 
             if (op_types[0] == t_string || op_types[1] == t_string) {
-                cout << "Error: Non numerical operand!" << endl;
+                this->syntaxError =  true;
+                yyerror("Non numerical operand!");
                 return;
             }
             if(opr.type>EQDEC){
-                if (op_types[0] == t_bool || op_types[1] != t_bool) {
-                    cout<<op_types[0]<<"  "<<op_types[1]<<endl;
-                    cout<<t_int<<"  "<<t_bool<<"  "<<t_float<<endl;
-                    cout << "Error in right operand! Expected boolean operand." << endl;
+                if (op_types[0] == t_bool && op_types[1] != t_bool) {
+                    this->syntaxError =  true;
+                    yyerror("in right operand! Expected boolean operand.");
                     return;
                 }
             }
             if(op_types[0] == t_float && (op_types[1] == t_float || op_types[1] == t_int)) {
-                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]) << endl;
-                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]) << endl;
-                cout<<"resulting expression is float"<<endl;
+
                 opr.eval = t_float;
             }
             else {
-                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]) << endl;
-                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]) << endl;
-                cout<<"resulting expression is int"<<endl;
+
                 opr.eval = t_int;
             }
         }
@@ -294,6 +269,7 @@ public:
                 }
             }
         }
+            this->syntaxError = true;
             string error = "Undefined variable " + symbol_name;
             yyerror(error);
             return false;

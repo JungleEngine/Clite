@@ -338,7 +338,6 @@ int ex(nodeType *p) {
 			printf("L%03d:\n", lbl2);
 
 
-			cout<<"FOR loop detected:"<<endl;
 			break;
 		case IF:
 			ex(p->opr.op[0]);

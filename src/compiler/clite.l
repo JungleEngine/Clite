@@ -44,7 +44,7 @@ endMC	"*/"
 							}			
 
 
-"for"						{return FOR; addScope();}
+"for"						{addScope(); return FOR; }
 "do"						return DO;
 "while"						return WHILE;
 "switch"					return SWITCH;
