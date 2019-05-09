@@ -387,9 +387,11 @@ int ex(nodeType *p) {
 			break;
 		case UMINUS:
 			ex(p->opr.op[0]);
+
 			printf("\tneg\n");
 			break;
 		case NOT:
+			ex(p->opr.op[0]);
 			printf("\tnot\n"); break;
 		default:
 			ex(p->opr.op[0]);
