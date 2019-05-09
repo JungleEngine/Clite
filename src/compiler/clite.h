@@ -31,6 +31,7 @@ NTEQ,
 
 /******** ASSIGN ********/ 
 EQ,
+EQDEC,	// declaration like: int x = 3;
 PLSEQ,
 MINEQ,
 DIVEQ,

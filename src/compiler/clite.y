@@ -110,8 +110,8 @@ num_exp:								  /* if not numerical expression throw an error */
 	;
 
 exp1:
-		const type VARIABLE				{ sem_analyzer->insertSymbol($3, $2, $1); $$ = opr(EQ, 2, id($3), conInt(0));  }
-	|	const type VARIABLE '=' expr 	{ sem_analyzer->insertSymbol($3, $2, $1); $$ = opr(EQ, 2, id($3), $5); 
+		const type VARIABLE				{ sem_analyzer->insertSymbol($3, $2, $1); $$ = opr(EQDEC, 2, id($3), conInt(0));  }
+	|	const type VARIABLE '=' expr 	{ sem_analyzer->insertSymbol($3, $2, $1); $$ = opr(EQDEC, 2, id($3), $5); 
 										}
 	|	exp2 							{ $$ = $1; }
 	;
@@ -337,6 +337,10 @@ int ex(nodeType *p) {
 			printf("\tprint\n");
 			break;
 		case EQ:
+			ex(p->opr.op[1]);
+			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
+			break;
+		case EQDEC:
 			ex(p->opr.op[1]);
 			printf("\tpop\t%s\n", p->opr.op[0]->id.var_name);
 			break;

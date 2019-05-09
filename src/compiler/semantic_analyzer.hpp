@@ -84,7 +84,13 @@ public:
                     //      leaving this as it is will cause us to always say that you cannot assign a value
                     //      to a constant variable
                     //      this will give an error if left like this!
-                    if(is_const){
+                    // if(opr.type == EQDEC){
+                    //     if(this->checkValidDeclaration(var_name)){
+                    //         cout<<"Redeclaration of variable: " << var_name<<endl;
+                    //         return;
+                    //     }
+                    // }
+                    if(is_const && opr.type != EQDEC ){
                         if(opr.type >=EQ && opr.type <= MULEQ){
                             cout<<"Assigning value to a constant variable!"<<endl;
                             return ;
@@ -165,16 +171,38 @@ public:
             }
         }
 
+        if(opr.type == EQ || opr.type == EQDEC){
+            if(op_types[0] == op_types[1]){
+                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]) << endl;
+                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]) << endl;
+                cout<<"resulting expression is: "<<getTypeNameFromCode(op_types[0])<<endl;
+                opr.eval = op_types[0];
+                return;
+            }
+            if(op_types[0]==t_bool && (op_types[1]==t_int)){
+                cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]) << endl;
+                cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]) << endl;
+                cout<<"casting right operand to bool"<<endl;
+                cout<<"resulting expression is: "<<getTypeNameFromCode(op_types[0])<<endl;
+                opr.eval = op_types[0];
+                return;
+            }
+        }
         if(opr.type >= EQ && opr.type <= MULEQ) {
+
             if (op_types[0] == t_string || op_types[1] == t_string) {
                 cout << "Error: Non numerical operand!" << endl;
                 return;
             }
-            if (op_types[0] == t_bool && op_types[1] != t_bool) {
-                cout << "Error in right operand! Expected boolean operand." << endl;
-                return;
+            if(opr.type>EQDEC){
+                if (op_types[0] == t_bool || op_types[1] != t_bool) {
+                    cout<<op_types[0]<<"  "<<op_types[1]<<endl;
+                    cout<<t_int<<"  "<<t_bool<<"  "<<t_float<<endl;
+                    cout << "Error in right operand! Expected boolean operand." << endl;
+                    return;
+                }
             }
-            if(op_types[0] == t_float || op_types[1] == t_float) {
+            if(op_types[0] == t_float && (op_types[1] == t_float || op_types[1] == t_int)) {
                 cout<<"type of left operand is: "<<getTypeNameFromCode(op_types[0]) << endl;
                 cout<<"type of right operand is: "<<getTypeNameFromCode(op_types[1]) << endl;
                 cout<<"resulting expression is float"<<endl;
