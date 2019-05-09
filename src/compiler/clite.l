@@ -44,7 +44,7 @@ endMC	"*/"
 							}			
 
 
-"for"						return FOR;
+"for"						{return FOR; addScope();}
 "do"						return DO;
 "while"						return WHILE;
 "switch"					return SWITCH;
@@ -109,8 +109,6 @@ endMC	"*/"
 "&&"						return OAND;
 
 "+="						return OPLSEQ;
-"++"						return OPLSPLS;
-"--"						return OMINMIN;
 "-="						return OMINEQ;
 "/="						return ODIVEQ;
 "*="						return OMULEQ;

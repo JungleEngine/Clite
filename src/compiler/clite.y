@@ -57,7 +57,7 @@ dataTypeEnum data_type;
 %left OGE OLE OEQ ONE '>' '<' OOR OAND
 %left '+' '-'
 %left '*' '/'
-%nonassoc UMINUS OPLSPLS OMINMIN ONOT
+%nonassoc UMINUS  ONOT
 %type <nPtr> stmt expr stmt_list exp1 exp2 switch_statement num_exp switch_block con_expr
 %type <data_type> type
 %type <boolean> const 
@@ -83,7 +83,7 @@ stmt:
 	| WHILE '(' expr ')'  stmt 			{ $$ = opr(WHILE, 2, $3, $5); }
 
 	| FOR '(' exp1 ';' exp1 ';' exp2 ')' stmt
-										{ $$ = opr(FOR, 4, $3, $5, $7, $9 ); }
+										{ $$ = opr(FOR, 4, $3, $5, $7, $9 ); removeScope(); }
 
 	| IF '(' expr ')'  stmt %prec IFX	{ $$ = opr(IF, 2, $3, $5); }
 	| IF '(' expr ')'  stmt ELSE stmt 	{ $$ = opr(IF, 3, $3, $5, $7); }
@@ -141,8 +141,6 @@ stmt_list:
 expr:
 	  con_expr 							{ $$ = $1; }
 	| VARIABLE 							{ $$ = id($1); }
-	| VARIABLE OPLSPLS 					{ $$ = opr(PLSPLS, 1, $1);}
-	| VARIABLE OMINMIN 					{ $$ = opr(MINMIN, 1, $1);}
 	| '-' expr %prec UMINUS 			{ $$ = opr(UMINUS, 1, $2); }
 
 	| '!' expr %prec ONOT 				{ $$ = opr(NOT, 1, $2); }
@@ -287,7 +285,6 @@ void freeNode(nodeType *p) {
 	free (p);
 }
 
-
 int ex(nodeType *p) {
 	int lbl1, lbl2;
 	if (!p) return 0;
@@ -318,11 +315,25 @@ int ex(nodeType *p) {
 			printf("L%03d:\n", lbl2);
 			break;
 		case DO:
-			cout<<"DO while detected:"<<endl;
-			// cout<<p->opr.op[0]<<endl;
-			// cout<<p->opr.op[1]<<endl;
+			ex(p->opr.op[1]);
+			printf("L%03d:\n", lbl1 = lbl++);
+			ex(p->opr.op[0]);
+			printf("\tjz\tL%03d\n", lbl2 = lbl++);
+			ex(p->opr.op[1]);
+			printf("\tjmp\tL%03d\n", lbl1);
+			printf("L%03d:\n", lbl2);
 			break;
 		case FOR:
+			ex(p->opr.op[0]);
+			printf("L%03d:\n", lbl1 = lbl++);
+			ex(p->opr.op[1]);
+			printf("\tjz\tL%03d\n", lbl2 = lbl++);
+			ex(p->opr.op[3]);
+			ex(p->opr.op[2]);
+			printf("\tjmp\tL%03d\n", lbl1);
+			printf("L%03d:\n", lbl2);
+
+
 			cout<<"FOR loop detected:"<<endl;
 			break;
 		case IF:
@@ -342,6 +353,7 @@ int ex(nodeType *p) {
 				printf("L%03d:\n", lbl1);
 			}
 			break;
+
 		case PRINT:
 			ex(p->opr.op[0]);
 			printf("\tprint\n");
@@ -374,10 +386,6 @@ int ex(nodeType *p) {
 			ex(p->opr.op[0]);
 			printf("\tneg\n");
 			break;
-		case PLSPLS:
-			printf("\tplus plus\n"); break;
-		case MINMIN:
-			printf("\tminus minus\n"); break;
 		case NOT:
 			printf("\tnot\n"); break;
 		default:
