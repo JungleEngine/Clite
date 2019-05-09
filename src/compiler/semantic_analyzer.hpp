@@ -73,19 +73,7 @@ public:
                     return ;
                 }
                 if(i == 0){
-                    //if it's constant then we cannot assign anything to it
-                    //if this variable is on the left then we're declaring it
-                    //TODO: we can assign if it's the declaration
-                    //TODO: we need to allow constant to be assigned a value in the line it's declared only!
-                    //      leaving this as it is will cause us to always say that you cannot assign a value
-                    //      to a constant variable
-                    //      this will give an error if left like this!
-                    // if(opr.type == EQDEC){
-                    //     if(this->checkValidDeclaration(var_name)){
-                    //         cout<<"Redeclaration of variable: " << var_name<<endl;
-                    //         return;
-                    //     }
-                    // }
+
                     if(is_const && opr.type != EQDEC ){
                         if(opr.type >=EQ && opr.type <= MULEQ){
                             this->syntaxError = true;
