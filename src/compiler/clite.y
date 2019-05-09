@@ -435,12 +435,10 @@ void yyerror(string s) {
 
 
 void addScope(){
-	printf("Adding new scope\n");
 	sem_analyzer->addScope();
 }
 
 void removeScope(){
-	printf("Removing scope\n");
 	sem_analyzer->removeScope();
 }
 

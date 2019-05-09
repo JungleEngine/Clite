@@ -4,8 +4,9 @@
 #include <string>
 #include <vector>
 #include "utilities.cpp"
-
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
 using namespace std;
 
 void yyerror(string s);
@@ -26,11 +27,14 @@ public:
     bool syntaxError = false; //This is set to true whenever a syntax error is found.
 
     vector<map<string, symbol*> > symbol_table;
-
+    string symbol_table_to_print = "";
 
     void addScope(){
+        this->symbol_table_to_print += " Adding new scope \n";
+        printSymbolTable();
         map<string, symbol*> mp;
-        this->symbol_table.push_back(mp);    }
+        this->symbol_table.push_back(mp);
+    }
 
     void removeScope(){
         this->symbol_table.pop_back();
@@ -300,15 +304,13 @@ public:
 
     // Printing the table.
     void printSymbolTable(){
-        printf("----------------------SYMBOL TABLE----------------------\n");
-
+        this->symbol_table_to_print += "----------------------SYMBOL TABLE----------------------\n";
 
         int scope = 0;
 
         vector<map<string, symbol*> >::iterator it;
         for(it = this->symbol_table.begin(); it != this->symbol_table.end(); it++){
-            printf("--------------------------------------------------------\n");
-            printf("Scope: %d\n", scope++);
+            this->symbol_table_to_print += "Scope: " + to_string(scope++) + "\n";
 
             map<string, symbol*>::iterator mp_it;
             for( auto mp_it = (*it).begin(); mp_it != (*it).end(); mp_it++){
@@ -334,11 +336,17 @@ public:
                         data_type = "bool";
                         break;
                     }
-                printf("{ Type: %s %s | Name: %s }\n",is_const.c_str(), data_type.c_str(), mp_it->first.c_str());
+                this->symbol_table_to_print +=
+                    "{ Type: " + is_const +" " + data_type + " | Name:" + mp_it->first + "}\n";
+
             }
-            printf("--------------------------------------------------------\n");
+            this->symbol_table_to_print +="--------------------------------------------------------\n";
 
         }
+        this->symbol_table_to_print += "----------------------SYMBOL TABLE----------------------\n";
+        this->symbol_table_to_print +="----------------------END SYMBOL TABLE-------------------\n";
+
+        cout<<this->symbol_table_to_print;
     }
 
 };

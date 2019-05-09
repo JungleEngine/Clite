@@ -94,7 +94,7 @@ endMC	"*/"
 
 
 "{"							{ addScope();	return *yytext;}
-"}"							{ removeScope(); cout<<"scope has ended"<<endl;	return *yytext;}
+"}"							{ removeScope(); return *yytext;}
 
 [-!()<>=+*/;.]				{
 							return *yytext;
