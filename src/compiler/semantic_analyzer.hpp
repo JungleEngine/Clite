@@ -174,17 +174,23 @@ public:
         if(opr.type >= EQ && opr.type <= MULEQ) {
 
             if (op_types[0] == t_string || op_types[1] == t_string) {
+                // if(opr.type == EQDEC){
+                //     removeSymbol(ops[0]->id.var_name);
+                // }
                 this->syntaxError =  true;
                 yyerror("Non numerical operand!");
                 return;
             }
-            if(opr.type>EQDEC){
-                if (op_types[0] == t_bool && op_types[1] != t_bool) {
-                    this->syntaxError =  true;
-                    yyerror("in right operand! Expected boolean operand.");
-                    return;
-                }
+            //if(opr.type>EQDEC){
+            if (op_types[0] == t_bool && op_types[1] != t_bool) {
+                // if(opr.type == EQDEC){
+                //     removeSymbol(ops[0]->id.var_name);
+                // }
+                this->syntaxError =  true;
+                yyerror("in right operand! Expected boolean operand.");
+                return;
             }
+            //}
             if(op_types[0] == t_float && (op_types[1] == t_float || op_types[1] == t_int)) {
 
                 opr.eval = t_float;
@@ -263,6 +269,14 @@ public:
         this->printSymbolTable();
 
     }
+
+    // void removeSymbol(string symbol_name){
+
+    //     symbol_table[symbol_table.size() - 1].erase(symbol_name);
+
+    //     this->printSymbolTable();
+
+    // }
 
     bool checkValidUsage(string symbol_name){
         // Valid if defined in any of the above scopes.
