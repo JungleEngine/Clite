@@ -114,6 +114,7 @@ exp1:
 	|	const type VARIABLE '=' expr 	{ sem_analyzer->insertSymbol($3, $2, $1); $$ = opr(EQDEC, 2, id($3), $5); 
 										}
 	|	exp2 							{ $$ = $1; }
+	|	const type error ';'			{sem_analyzer->syntaxError = true; $$ = NULL; yyerror("invalid variable name"); yyerrok;}
 	;
 
 exp2:
@@ -291,6 +292,9 @@ void freeNode(nodeType *p) {
 int ex(nodeType *p) {
 	int lbl1, lbl2;
 	if (!p) return 0;
+	if(sem_analyzer->syntaxError){
+		return 0;
+	}
 	switch (p->type) {
 	case typeCon :
 		printf("\tpush\t%d\n", p->con.value);

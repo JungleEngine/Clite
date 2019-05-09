@@ -277,6 +277,7 @@ public:
                 }
             }else{
                 string error = "variable: " + symbol_name + " declared before in this scope";
+                this->syntaxError = true;
                 yyerror(error);
             }
 
