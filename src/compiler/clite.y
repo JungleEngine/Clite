@@ -66,10 +66,10 @@ dataTypeEnum data_type;
 %%
 
 program:
-	function { exit(0); }
+	function {  cout<<sem_analyzer->symbol_table_to_print; exit(0); }
 	;
 function:
-		function stmt 					{ ex($2); freeNode($2); }
+		function stmt 					{ ex($2);freeNode($2); }
 	| /* NULL */
 	;
 
@@ -114,7 +114,6 @@ exp1:
 	|	const type VARIABLE '=' expr 	{ sem_analyzer->insertSymbol($3, $2, $1); $$ = opr(EQDEC, 2, id($3), $5); 
 										}
 	|	exp2 							{ $$ = $1; }
-	|	const type error ';'			{sem_analyzer->syntaxError = true; $$ = NULL; yyerror("invalid variable name"); yyerrok;}
 	;
 
 exp2:

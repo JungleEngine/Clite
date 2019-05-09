@@ -231,13 +231,23 @@ class Main(QMainWindow):
 
         self.compiler_output = QTextEdit(self)
         self.compiler_output.move(0, self.text.frameGeometry().height() + 100)
-        self.compiler_output.resize(wind_x, int(wind_y / 2) - 120)
+        self.compiler_output.resize(int(wind_x / 2), int(wind_y / 2) - 120)
         self.compiler_output.setFont(QFont("DejaVu Sans Mono", 12))
         self.compiler_output.setFontPointSize(12)
         self.compiler_output.setStyleSheet("background-color:  #333131; color:white;"
                                            "")
         self.compiler_output.setReadOnly(True)
+        # ------- symbol table Output -----------------------------------
 
+        self.symbol_table_output = QTextEdit(self)
+        self.symbol_table_output.move(self.compiler_output.frameGeometry().width() + 5,
+                                      self.text.frameGeometry().height() + 100)
+        self.symbol_table_output.resize(int(wind_x / 2), int(wind_y / 2) - 120)
+        self.symbol_table_output.setFont(QFont("DejaVu Sans Mono", 14))
+        self.symbol_table_output.setFontPointSize(14)
+        self.symbol_table_output.setStyleSheet("background-color:  #333131; color:white;"
+                                           "")
+        self.symbol_table_output.setReadOnly(True)
         # ------- Statusbar ------------------------------------
 
         self.status = self.statusBar()
@@ -443,6 +453,7 @@ class Main(QMainWindow):
 
     def Compile(self):
         self.compiler_output.clear()
+        self.symbol_table_output.clear()
         """
         Compile code
         """
@@ -469,11 +480,14 @@ class Main(QMainWindow):
         if filedata.find("error") != -1:
             self.compiler_output.setStyleSheet("background-color:  #333131; color:red;"
                                                "")
-        self.compiler_output.setFontPointSize(20)
+        self.compiler_output.setFontPointSize(16)
         self.compiler_output.append("Compiler Output:")
         self.compiler_output.setFontPointSize(14)
-
-        self.compiler_output.append(filedata)
+        symbol_table_indx = filedata.find("<symtable>")
+        symbol_table = filedata[symbol_table_indx + 10:]
+        quadruples_data =  filedata[0:symbol_table_indx]
+        self.compiler_output.append(quadruples_data)
+        self.symbol_table_output.append(symbol_table)
         f.close()
 
 
