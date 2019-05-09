@@ -43,7 +43,7 @@ char sIndex;	/* symbol table index */
 char* var_name;
 nodeType *nPtr;	/* node pointer */
 dataTypeEnum data_type;
-};
+}
 
 %token <boolean> TRUEFALSE
 %token <iValue> INTEGER 
@@ -144,6 +144,7 @@ expr:
 	| VARIABLE OPLSPLS 					{ $$ = opr(PLSPLS, 1, $1);}
 	| VARIABLE OMINMIN 					{ $$ = opr(MINMIN, 1, $1);}
 	| '-' expr %prec UMINUS 			{ $$ = opr(UMINUS, 1, $2); }
+
 	| '!' expr %prec ONOT 				{ $$ = opr(NOT, 1, $2); }
 	| expr '+' expr 					{ $$ = opr(PLS, 2, $1, $3); }
 	| expr '-' expr 					{ $$ = opr(MIN, 2, $1, $3); }
@@ -291,8 +292,17 @@ int ex(nodeType *p) {
 	int lbl1, lbl2;
 	if (!p) return 0;
 	switch (p->type) {
-	case typeCon:
+	case typeCon :
 		printf("\tpush\t%d\n", p->con.value);
+		break;
+	case typeFloat :
+		printf("\tpush\t%f\n", p->flo.value);
+		break;
+	case typeChar :
+		printf("\tpush\t%s\n", p->con_char.value);
+		break;
+	case typeBool :
+		printf("\tpush\t%s\n", (p->con_char.value)?"true":"false");
 		break;
 	case typeId:
 		printf("\tpush\t%s\n", p->id.var_name);
@@ -370,10 +380,6 @@ int ex(nodeType *p) {
 			printf("\tminus minus\n"); break;
 		case NOT:
 			printf("\tnot\n"); break;
-		case OR:
-			printf("\tor\n"); break;
-		case AND:
-			printf("\tand\n"); break;
 		default:
 			ex(p->opr.op[0]);
 			ex(p->opr.op[1]);
@@ -398,6 +404,11 @@ int ex(nodeType *p) {
 				printf("\tcompNE\n"); break;
 			case EQEQ:
 				printf("\tcompEQ\n"); break;
+			case OR:
+				printf("\tor\n"); break;
+
+			case AND:
+				printf("\tand\n"); break;
 			default:
 				printf("unrecognized operation please check the enum and stuff");	
 			}
@@ -408,7 +419,7 @@ int ex(nodeType *p) {
 
 void yyerror(string s) {
     extern int yylineno;
-	fprintf(stdout, "%s at line:%d\n", s.c_str(), yylineno);
+	fprintf(stdout, "error: %s at line:%d\n", s.c_str(), yylineno);
 }
 
 
